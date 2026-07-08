@@ -1,1 +1,4 @@
 # programming
+
+- metaprogramming
+- dynamic programming
