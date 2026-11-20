@@ -9,7 +9,7 @@ Contract (see PROMPT.md §4.4):
     stdout; mismatches are reported as MISMATCH (a failure with --strict).
 
 Usage:
-  python3 tools/check_snippets.py                # every *.md in the repo root
+  python3 tools/check_snippets.py                # every chapter and appendix
   python3 tools/check_snippets.py 15_*.md -v     # selected chapters, echo their stdout
 """
 from __future__ import annotations
@@ -61,7 +61,7 @@ def run_chapter(path: Path, verbose: bool, strict: bool = False) -> tuple[int, i
         buf = io.StringIO()
         try:
             with contextlib.redirect_stdout(buf):
-                exec(compile(code, f"{path.name}:{line_no}", "exec"), ns)
+                exec(compile(code, f"{path.name}:{line_no}", "exec", dont_inherit=True), ns)
             if expected is not None and norm(expected) != norm(buf.getvalue()):
                 print(f"MISMATCH {path.name}:{line_no}\n  expected:\n{expected}  got:\n{buf.getvalue()}")
                 if strict:
@@ -81,7 +81,7 @@ def main(argv: list[str]) -> int:
     verbose = "-v" in argv
     strict = "--strict" in argv
     names = [a for a in argv if a not in ("-v", "--strict")]
-    paths = [Path(n) for n in names] if names else sorted(ROOT.glob("*.md"))
+    paths = [Path(n) for n in names] if names else sorted([*ROOT.glob("[0-9][0-9]_*.md"), *ROOT.glob("appendix_*.md")])
     sys.setrecursionlimit(10_000)
     total_fail = 0
     for p in paths:
