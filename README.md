@@ -114,7 +114,7 @@ The authoring standard is checked in at [PROMPT.md](./PROMPT.md). Every timing c
 ## Running the Code
 
 ```bash
-python3 tools/check_snippets.py          # execute every snippet in every chapter
+python3 tools/check_snippets.py --strict # run every snippet; fail if any pasted output differs
 ```
 
 ```bash

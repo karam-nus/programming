@@ -305,7 +305,13 @@ the HTML; CSS renders the innermost on top. Use for recursion, closures, generat
 **Collapsible code:** `<details class="code-fold">` — §4.4.
 
 Blank lines inside HTML blocks break kramdown. Keep each component contiguous. Escape `<` as
-`&lt;` inside HTML text.
+`&lt;` inside HTML text. Markdown (backticks, emphasis) is not rendered inside HTML blocks — use
+`<code>` and `<em>`.
+
+**Liquid.** GitHub Pages runs Jekyll 3.10, which evaluates Liquid tags everywhere, including inside
+code fences. A page whose code contains a double opening brace or a brace-percent pair must have
+its whole body wrapped in Liquid `raw` / `endraw` tags (see the first and last body lines of
+`11_metaclasses_and_class_creation.md`), or the site build fails.
 
 ### 4.3 Math
 
@@ -351,6 +357,14 @@ use names defined earlier. To keep that mechanical:
 - Blocks must finish in a few seconds; heavy measurements belong in `bench/`.
 
 Run it with `python3 tools/check_snippets.py` (all chapters) or with chapter files as arguments.
+A ` ```text ` block placed **immediately** after a ` ```python ` block is that block's expected
+stdout; `--strict` turns any mismatch into a failure and is the bar for "done". When drafting,
+write `PLACEHOLDER` in the text block, run `--fill` to paste the real output in, then **read the
+filled output and reconcile the prose with it** — never the other way round. Prose between the
+two fences (e.g. "mypy reports:") deliberately detaches a text block from the runner.
+
+Output that depends on timing or machine speed is never pasted verbatim: print a threshold check
+(`ratio > 100: True`) and state the measured figure, with conditions, in prose or in `bench/`.
 
 ### 4.5 Tables
 

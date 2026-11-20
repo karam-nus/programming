@@ -1,6 +1,7 @@
 ---
 title: "Chapter 11 — Metaclasses & Class Creation"
 ---
+{% raw %}
 
 [← Back to Table of Contents](./README.md)
 
@@ -373,3 +374,4 @@ Why generate source instead of writing one generic `__init__(self, **kwargs)` th
 ---
 
 **Next:** [Chapter 12 — Introspection, AST & Code Generation](./12_introspection_ast_and_codegen.md) — the top rungs: reading, rewriting and generating code, and changing how modules load.
+{% endraw %}

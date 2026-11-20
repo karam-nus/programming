@@ -43,8 +43,9 @@
           {% if item.url == "" %}
             <div class="nav-section">{{ item.title }}</div>
           {% else %}
+            {% assign item_slash = item.url | append: '/' %}
             <a href="{{ item.url | relative_url }}"
-               class="nav-item{% if page.url == item.url or page.url == item.url | append: '/' %} active{% elsif page.url contains item.url and item.url != '/' %} active{% endif %}">
+               class="nav-item{% if page.url == item.url or page.url == item_slash %} active{% elsif page.url contains item.url and item.url != '/' %} active{% endif %}">
               {{ item.title }}
             </a>
           {% endif %}
