@@ -171,6 +171,26 @@ nested = safe_div(safe_div(hits, total), 0)
 0.75 nan
 ```
 
+<div class="svgfig">
+<svg viewBox="0 0 820 230" width="820" role="img" aria-label="AST before and after the SafeDivision rewrite">
+<text x="190" y="22" text-anchor="middle" class="th">before: hits / total</text>
+<text x="620" y="22" text-anchor="middle" class="th" style="fill:#4ade80">after: safe_div(hits, total)</text>
+<rect x="110" y="40" width="160" height="34" rx="6" fill="#2a1622" stroke="#f9a8d4"/><text x="190" y="57" text-anchor="middle" class="tm">BinOp(op=Div)</text>
+<rect x="30" y="140" width="150" height="34" rx="6" class="box"/><text x="105" y="157" text-anchor="middle" class="tm">Name 'hits'</text>
+<rect x="200" y="140" width="150" height="34" rx="6" class="box"/><text x="275" y="157" text-anchor="middle" class="tm">Name 'total'</text>
+<path d="M170 74 L110 140" class="ln"/><path d="M210 74 L270 140" class="ln"/>
+<text x="140" y="112" class="ts">left</text><text x="250" y="112" class="ts">right</text>
+<path d="M370 100 L440 100" class="ln hot" stroke-width="3"/><path d="M430 92 L444 100 L430 108" class="ln hot" stroke-width="3"/>
+<text x="405" y="88" text-anchor="middle" class="ts">visit_BinOp</text>
+<rect x="520" y="40" width="200" height="34" rx="6" fill="#12221a" stroke="#4ade80"/><text x="620" y="57" text-anchor="middle" class="tm">Call(func=Name 'safe_div')</text>
+<rect x="460" y="140" width="150" height="34" rx="6" class="box"/><text x="535" y="157" text-anchor="middle" class="tm">Name 'hits'</text>
+<rect x="630" y="140" width="150" height="34" rx="6" class="box"/><text x="705" y="157" text-anchor="middle" class="tm">Name 'total'</text>
+<path d="M600 74 L540 140" class="ln"/><path d="M640 74 L700 140" class="ln"/>
+<text x="560" y="112" class="ts">args[0]</text><text x="680" y="112" class="ts">args[1]</text>
+<text x="410" y="210" text-anchor="middle" class="ts">The children are reused unchanged; only the parent node is replaced. ast.copy_location keeps line numbers for tracebacks.</text>
+</svg>
+</div>
+
 ### Safe evaluation of literals
 
 `eval` on untrusted input is arbitrary code execution. `ast.literal_eval` accepts only literals (strings, numbers, tuples, lists, dicts, sets, booleans, `None`) and is the correct way to parse a Python-literal config value:
@@ -412,7 +432,7 @@ True
 | PEP 362 — Function Signature Object | Hastings et al., 2012 | peps.python.org/pep-0362 | `Signature`, `bind` |
 | `ast` module docs; *Green Tree Snakes* | Python docs; Kluyver | docs.python.org/3/library/ast.html | Node types, `NodeTransformer`, `unparse`, `literal_eval` |
 | Language Reference §5 — The import system; PEP 302, PEP 451 | Python docs; Moore & Hylton 2002; Snow 2013 | docs.python.org/3/reference/import.html | Finders, loaders, specs, `sys.modules` ordering |
-| PEP 810 — Explicit lazy imports | Python Steering Council-accepted, 2025 | peps.python.org/pep-0810 | `lazy import` semantics and controls (3.15) |
+| PEP 810 — Explicit lazy imports | Galindo Salgado, Méndez Bravo et al., 2025 | peps.python.org/pep-0810 | `lazy import` semantics and controls (3.15) |
 | What's New in Python 3.15 | Python docs, 2026 | docs.python.org/3.15/whatsnew/3.15.html | Lazy import restrictions and `-X lazy_imports` |
 | PEP 669 — Low Impact Monitoring for CPython | Shannon, 2022 | peps.python.org/pep-0669 | `sys.monitoring` events and tool IDs |
 | PEP 523 — Adding a frame evaluation API to CPython | Cannon, Brown, 2016 | peps.python.org/pep-0523 | The frame-evaluation hook |

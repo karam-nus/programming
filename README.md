@@ -5,7 +5,7 @@ permalink: /
 
 # ⌨️ Programming — The Complete Guide
 
-> **From Bytecode to Dynamic Programming**: how a Python program actually executes, how to write code that writes code, and the algorithmic techniques that keep recurring in real work. Every mechanism demonstrated, every algorithm derived, every timing measured.
+> **From Bytecode to Dynamic Programming**: how a Python program actually executes, how to write code that writes code, and the algorithmic techniques that keep recurring in real work. Every mechanism demonstrated, every algorithm derived, every timing measured — and 18 interactive labs that let you step through the machinery yourself.
 
 ## Who This Is For
 
@@ -28,24 +28,24 @@ The authoring standard is checked in at [PROMPT.md](./PROMPT.md). Every timing c
 | 2 | [Objects, Names & Memory](./02_objects_names_and_memory.md) | Names are bindings, aliasing, `is` vs `==`, refcounting, the cycle collector, `weakref`, why `getsizeof` lies |
 | 3 | [Scope, Closures & Binding](./03_scope_closures_and_binding.md) | LEGB decided at compile time, `UnboundLocalError`, cells, `nonlocal`, late binding, comprehension and class scopes |
 | 4 | [The Data Model & Attribute Lookup](./04_the_data_model_and_attribute_lookup.md) | The exact `obj.attr` algorithm, special-method lookup, **C3 linearization derived**, `super()`, `NotImplemented`, hashing |
-| 5 | [Iterators, Generators & Coroutines](./05_iterators_generators_and_coroutines.md) | `for` desugared, generators as suspended frames, `send`/`yield from`, pipelines, coroutines as the same machine |
+| 5 | [Iterators, Generators & Coroutines](./05_iterators_generators_and_coroutines.md) | `for` desugared, generators as suspended frames, `send`/`yield from`, **exceptions and their cost model**, coroutines as the same machine |
 | **Part II — Paradigms** | | |
-| 6 | [Functional Programming](./06_functional_programming.md) | Purity, higher-order functions, `functools`, immutability, recursion without TCO, composition as in JAX |
+| 6 | [Functional Programming](./06_functional_programming.md) | Purity, higher-order functions, `functools`, **structural pattern matching**, immutability, recursion without TCO, JAX |
 | 7 | [Types & Static Typing](./07_types_and_static_typing.md) | Gradual, nominal vs structural, PEP 695 generics, **variance derived**, `ParamSpec`, `TypeIs`, deferred annotations |
 | 8 | [Concurrency & Parallelism](./08_concurrency_and_parallelism.md) | What the GIL protects, threads vs processes measured, the asyncio event loop, races, free-threaded Python |
 | **Part III — Metaprogramming** | | |
 | 9 | [Decorators](./09_decorators.md) | **The metaprogramming ladder**, `f = d(f)`, `wraps`, factories, class decorators, typing decorators with `ParamSpec` |
 | 10 | [Descriptors](./10_descriptors.md) | How methods bind, `property`/`classmethod`/`staticmethod` rebuilt in Python, `__set_name__`, a validated-field framework |
-| 11 | [Metaclasses & Class Creation](./11_metaclasses_and_class_creation.md) | The `class` statement desugared, `__prepare__`, `__init_subclass__` first, metaclass conflicts, how `dataclass` writes code |
+| 11 | [Metaclasses & Class Creation](./11_metaclasses_and_class_creation.md) | The `class` statement desugared, `__prepare__`, `__new__` vs `__init__`, `__init_subclass__` first, metaclass conflicts, how `dataclass` writes code |
 | 12 | [Introspection, AST & Code Generation](./12_introspection_ast_and_codegen.md) | `inspect`, AST transforms, `exec` scoping, import hooks, monkeypatching, PEP 523 and `torch.compile`, lazy imports |
 | **Part IV — Algorithmic Techniques** | | |
-| 13 | [Complexity & Cost Models](./13_complexity_and_cost_models.md) | Asymptotics done right, amortized analysis derived from `list_resize`, the measured Python cost model |
-| 14 | [Recursion & Divide and Conquer](./14_recursion_and_divide_and_conquer.md) | Recursion as induction, the master theorem, merge sort, quickselect, binary search invariants, explicit stacks |
+| 13 | [Complexity & Cost Models](./13_complexity_and_cost_models.md) | Asymptotics done right, amortized analysis derived from `list_resize`, the measured Python cost model, **NP-hardness and what to do about it** |
+| 14 | [Recursion & Divide and Conquer](./14_recursion_and_divide_and_conquer.md) | Recursion as induction, the master theorem, merge sort, quickselect, binary search invariants, **backtracking**, explicit stacks |
 | 15 | [Dynamic Programming I — Foundations](./15_dynamic_programming_foundations.md) | **The seven-field DP recipe**, memoization vs tabulation, coin change, LCS, knapsack, space optimization, reconstruction |
 | 16 | [Dynamic Programming II — Patterns](./16_dynamic_programming_patterns.md) | Interval, LIS in $O(n\log n)$, edit distance, tree, bitmask, DAG and digit DP — and Viterbi, CTC, DTW in ML |
 | 17 | [Greedy Algorithms](./17_greedy_algorithms.md) | The greedy-choice property, exchange arguments, interval scheduling, Huffman, and hunting counterexamples |
 | 18 | [Graph Algorithms](./18_graph_algorithms.md) | BFS/DFS, topological sort (autograd's backbone), Dijkstra with `heapq`, Bellman–Ford, union-find, MST |
-| 19 | [Data Structure Internals](./19_data_structure_internals.md) | CPython's `list`, `dict`, `set`, `deque`, `heapq` from the source; monotonic stacks, prefix sums, tries |
+| 19 | [Data Structure Internals](./19_data_structure_internals.md) | CPython's `list`, `dict`, `set`, `deque`, `heapq` from the source; prefix sums, monotonic stacks, **two pointers**, tries |
 | 20 | [Bit Manipulation](./20_bit_manipulation.md) | Two's complement with infinite-precision ints, lowbit tricks, subset enumeration, bitsets, IEEE-754 via `struct` |
 | **Part V — Performance** | | |
 | 21 | [Profiling & Optimization](./21_profiling_and_optimization.md) | `timeit`, `cProfile`, sampling profilers, `tracemalloc`, and the optimization ladder with measured effects |
@@ -109,6 +109,7 @@ The authoring standard is checked in at [PROMPT.md](./PROMPT.md). Every timing c
 - **Python baseline 3.12.** Newer features are tagged `(3.13+)`, `(3.14+)`, `(3.15+)`. Outputs were produced with CPython 3.13 unless stated.
 - **"Python"** means language-guaranteed behaviour; **"CPython"** means an implementation detail.
 - Long implementations are folded — click the ▸ to expand.
+- Boxes marked **▶ LIVE** are interactive labs: step, play and change the inputs. They re-implement each chapter's algorithm, so their numbers match the verified snippets. Charts are generated from recorded measurements, never drawn by hand.
 - Every DP uses the same seven fields: *state, transition, base cases, order, answer, complexity, reconstruction*.
 
 ## Running the Code
@@ -119,6 +120,14 @@ python3 tools/check_snippets.py --strict # run every snippet; fail if any pasted
 
 ```bash
 cd bench && python3 cost_model.py        # reproduce a measurement table
+```
+
+```bash
+python3 tools/make_figures.py            # regenerate every chart from bench/RESULTS.md (needs matplotlib)
+```
+
+```bash
+python3 tools/check_site.py              # classes, labs, links, images, HTML-block hygiene
 ```
 
 To preview the site locally:

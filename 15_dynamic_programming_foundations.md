@@ -12,17 +12,11 @@ title: "Chapter 15 — Dynamic Programming I: Foundations"
 
 Dynamic programming (DP) applies when a problem decomposes into subproblems that **overlap** — the same subproblem is reached by many paths — and whose optimal solutions combine into an optimal solution for the whole (**optimal substructure**). Divide and conquer ([Chapter 14](./14_recursion_and_divide_and_conquer.md)) re-solves overlapping subproblems; DP solves each once and stores the answer. This chapter introduces the **seven-field DP recipe** used for every DP in the book, the two implementation styles (memoization and tabulation) and their measured costs, and works five foundational problems: Fibonacci, coin change (two variants, and why loop order matters), longest common subsequence with reconstruction, and 0/1 knapsack with space optimization. [Chapter 16](./16_dynamic_programming_patterns.md) extends the recipe to the pattern catalogue.
 
-<div class="diagram">
-<div class="diagram-title">The DP pipeline: from brute force to optimized table</div>
-<div class="flow-h">
-  <div class="flow-node red">Brute-force recursion<small>correct, exponential</small></div>
-  <div class="flow-arrow"></div>
-  <div class="flow-node orange">+ cache<small>memoization, top-down</small></div>
-  <div class="flow-arrow"></div>
-  <div class="flow-node purple">Table in dependency order<small>tabulation, bottom-up</small></div>
-  <div class="flow-arrow accent"></div>
-  <div class="flow-node accent">Keep only needed rows<small>space optimization</small></div>
-</div>
+<div class="steps">
+<div class="step"><b>Brute-force recursion</b><span>Correct, exponential — and kept forever as the oracle.</span></div>
+<div class="step"><b>+ cache</b><span>Memoization, top-down: index the state, add <code>@functools.cache</code>.</span></div>
+<div class="step"><b>Table in dependency order</b><span>Tabulation, bottom-up: state the seven fields first.</span></div>
+<div class="step"><b>Keep only needed rows</b><span>Space optimization — then re-verify against the oracle.</span></div>
 </div>
 
 ---
@@ -62,6 +56,12 @@ for n in (10, 20, 25):
 20 21891 21
 25 242785 26
 ```
+
+<div class="fig"><img src="assets/images/fib_calls.svg" alt="Log-scale line chart: naive Fibonacci calls grow exponentially to over a million by n=30, memoized calls grow linearly as n+1"><div class="figcap">Exact call counts. The memoized line is n + 1 because each subproblem is computed once.</div></div>
+
+Watch the repetition directly. Step through the call tree, then switch on the cache: every purple node is a lookup that replaces a whole subtree.
+
+<div class="lab" data-lab="fibtree"></div>
 
 177 calls for $n = 10$ — the same count `sys.monitoring` observed in [Chapter 12](./12_introspection_ast_and_codegen.md) — versus 11 distinct subproblems. Adding a cache changes $\Theta(\varphi^n)$ to $\Theta(n)$ without changing the recursion. That is the whole idea; everything else is engineering.
 
@@ -105,6 +105,8 @@ Measured on LCS of two random 400-character DNA strings (`bench/dp_memo.py`, CPy
 | **`functools.cache` top-down** | 44 | up to $n + m$ | first correct version; only some states reachable |
 | **2-D table bottom-up** | 14 | 1 | need reconstruction; $nm$ fits in memory |
 | **Two rolling rows** | 11 | 1 | value only; large $n, m$ |
+
+<div class="fig"><img src="assets/images/memo_vs_table.svg" alt="Bar chart: LCS of two 400-character strings takes 44 ms with functools.cache, 14 ms with a 2-D table, 11 ms with two rolling rows"><div class="figcap">Generated from <code>bench/dp_memo.py</code>.</div></div>
 
 The memoized version is ~3× slower — a Python function call plus a dict lookup on a tuple key per state, versus a list index — and needs `sys.setrecursionlimit` beyond ~1000 levels. Its advantages are that it computes only the states actually reachable from the answer and that it is a mechanical transformation of the brute force. The workflow this book recommends: **write the brute-force recursion, add `@cache`, check against brute force on small inputs, then convert to a table if size or speed require it.**
 
@@ -273,6 +275,10 @@ D [0, 1, 2, 2, 2, 3, 3]
 A [0, 1, 2, 2, 3, 3, 4]
 B [0, 1, 2, 2, 3, 4, 4]
 ```
+
+Fill the same table yourself, cell by cell. Each cell lights up the cells it reads; when the table is full, the reconstruction path appears. The dropdown also has edit distance, coin change and both knapsack variants:
+
+<div class="lab" data-lab="dptable" data-problem="lcs"></div>
 
 Cross-check against brute force (all subsequences of the shorter string) on random small inputs:
 

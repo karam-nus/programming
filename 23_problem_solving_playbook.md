@@ -12,19 +12,12 @@ title: "Chapter 23 — The Problem-Solving Playbook"
 
 This chapter contains no new techniques. It is an index into the book organised by the question you actually have when facing an unfamiliar problem: *given these constraints, what complexity must the solution have; given these words in the statement, which technique is likely; how do I get from a correct brute force to a fast solution without guessing; and when is metaprogramming the right answer to a design problem?* One problem is worked end to end through the brute → memoize → tabulate → optimize pipeline to show the method as a sequence of checked steps.
 
-<div class="diagram">
-<div class="diagram-title">The method</div>
-<div class="flow">
-  <div class="flow-node accent wide">1. Read constraints → required complexity (table below)</div>
-  <div class="flow-arrow"></div>
-  <div class="flow-node purple wide">2. Read the statement → candidate techniques (signal table)</div>
-  <div class="flow-arrow"></div>
-  <div class="flow-node orange wide">3. Write the obviously-correct brute force; keep it forever as the oracle</div>
-  <div class="flow-arrow"></div>
-  <div class="flow-node green wide">4. Improve one step at a time; after each step, assert equality with the oracle on random inputs</div>
-  <div class="flow-arrow"></div>
-  <div class="flow-node cyan wide">5. Profile only once the complexity is right (Ch 21)</div>
-</div>
+<div class="steps">
+<div class="step"><b>Read constraints</b><span>They imply the admissible complexity (table below).</span></div>
+<div class="step"><b>Read the statement</b><span>Signal phrases point at candidate techniques.</span></div>
+<div class="step"><b>Write the oracle</b><span>An obviously-correct brute force. Keep it forever.</span></div>
+<div class="step"><b>Improve one step</b><span>After each step, assert equality with the oracle on random inputs.</span></div>
+<div class="step"><b>Profile last</b><span>Only once the complexity is right (Ch 21).</span></div>
 </div>
 
 ---
@@ -32,6 +25,8 @@ This chapter contains no new techniques. It is an index into the book organised 
 ## Step 1: Constraints Determine the Complexity
 
 With roughly $10^7$ simple Python operations per second (an order-of-magnitude estimate consistent with [Chapter 13](./13_complexity_and_cost_models.md)'s ~10–30 ns per operation; 10–100× more with NumPy or compiled code), input size bounds the admissible complexity:
+
+<div class="lab" data-lab="growth"></div>
 
 | Input size $n$ | Admissible complexity | Likely techniques | Chapter |
 |---------------:|:---:|-------------------|:---:|

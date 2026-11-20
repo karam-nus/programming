@@ -11,22 +11,18 @@ title: "Chapter 11 — Metaclasses & Class Creation"
 
 ## Overview
 
-A `class` statement is executable code that builds an object. Between the `class` keyword and the finished class there are six hooks — `__prepare__`, the body execution, `type.__new__`, `__set_name__`, `__init_subclass__`, and `type.__init__` — and a metaclass can override some of them. This chapter desugars the statement, traces every hook in order, establishes when each one is the right tool, and shows how `dataclasses` uses the same machinery plus `exec` to write methods for you. It builds on attribute lookup ([Chapter 4](./04_the_data_model_and_attribute_lookup.md)), descriptors ([Chapter 10](./10_descriptors.md)) and the metaprogramming ladder ([Chapter 9](./09_decorators.md)).
+A `class` statement is executable code that builds an object. Between the `class` keyword and the finished class there are six hooks — `__prepare__`, the body execution, `type.__new__`, `__set_name__`, `__init_subclass__`, and `type.__init__` — and a metaclass can override some of them. This chapter desugars the statement, traces every hook in order, shows the parallel `__new__`/`__init__` protocol for instances, establishes when each hook is the right tool, and shows how `dataclasses` uses the same machinery plus `exec` to write methods for you. It builds on attribute lookup ([Chapter 4](./04_the_data_model_and_attribute_lookup.md)), descriptors ([Chapter 10](./10_descriptors.md)) and the metaprogramming ladder ([Chapter 9](./09_decorators.md)).
 
-<div class="diagram">
-<div class="diagram-title">What `class Model(Base, metaclass=Meta, tag="x"): body` does</div>
-<div class="flow">
-  <div class="flow-node accent wide">1. Determine the metaclass <small>explicit metaclass= or the most derived type(base)</small></div>
-  <div class="flow-arrow"></div>
-  <div class="flow-node purple wide">2. ns = Meta.__prepare__("Model", bases, tag="x") <small>usually a plain dict</small></div>
-  <div class="flow-arrow"></div>
-  <div class="flow-node cyan wide">3. exec(body, globals, ns) <small>defs and assignments fill ns</small></div>
-  <div class="flow-arrow"></div>
-  <div class="flow-node orange wide">4. cls = Meta("Model", bases, ns, tag="x") <small>→ Meta.__new__ → type.__new__</small></div>
-  <div class="flow-arrow"></div>
-  <div class="flow-node green wide">inside type.__new__: __set_name__ on each attribute, then Base.__init_subclass__(cls, tag="x")</div>
-  <div class="flow-arrow"></div>
-  <div class="flow-node teal wide">5. Meta.__init__(cls, ...) · 6. class decorators · 7. bind the name Model</div>
+<div class="conveyor">
+<div class="conveyor-title">The class-creation assembly line for <code>class Model(Base, metaclass=Meta, tag="x"): body</code></div>
+<div class="conveyor-belt">
+<div class="station blue"><div class="st-num">1</div><div class="st-name">pick metaclass</div><div class="st-desc">explicit <code>metaclass=</code> or the most derived <code>type(base)</code></div></div>
+<div class="station cyan"><div class="st-num">2</div><div class="st-name">__prepare__</div><div class="st-desc">returns the namespace mapping; sees class kwargs</div></div>
+<div class="station green"><div class="st-num">3</div><div class="st-name">exec(body, ns)</div><div class="st-desc">defs and assignments fill the namespace</div></div>
+<div class="station purple"><div class="st-num">4</div><div class="st-name">Meta.__new__ → type.__new__</div><div class="st-desc">builds the class, computes the MRO, lays out slots</div></div>
+<div class="station orange"><div class="st-num">5</div><div class="st-name">__set_name__</div><div class="st-desc">on every attribute that defines it</div></div>
+<div class="station pink"><div class="st-num">6</div><div class="st-name">__init_subclass__</div><div class="st-desc">on the parent, with the class kwargs</div></div>
+<div class="station yellow"><div class="st-num">7</div><div class="st-name">Meta.__init__ · decorators</div><div class="st-desc">then the name Model is bound</div></div>
 </div>
 </div>
 
@@ -172,6 +168,43 @@ Compare with the alternatives:
 | **`__init_subclass__`** | every subclass (not the base) | the subclass after creation | yes | registries, subclass validation, class keywords |
 | **`__set_name__`** | each descriptor attribute | the descriptor / owner | yes | per-field setup ([Chapter 10](./10_descriptors.md)) |
 | **Metaclass** | the base and every subclass | the namespace *during* body execution, the class's own behaviour (`len(cls)`, `cls[...]`, `isinstance` checks) | only if metaclasses are compatible | namespace control, operators on classes |
+
+---
+
+## Object Creation: `__new__` Then `__init__`
+
+The same two-phase protocol applies one level down, when a class creates an *instance*: `Cls(*args)` is `type(Cls).__call__`, which calls `Cls.__new__(Cls, *args)` to **allocate** the object and then, if the result is an instance of `Cls`, `obj.__init__(*args)` to **initialise** it.
+
+| Method | Receives | Returns | Override it when |
+|--------|----------|---------|------------------|
+| **`__init__`** | the new instance | `None` | almost always — setting attributes |
+| **`__new__`** | the class | the instance (any object!) | subclassing immutables (`int`, `str`, `tuple`), instance caching, returning a different type |
+
+Immutable types set their value in `__new__`, because by the time `__init__` runs the value is already fixed:
+
+```python
+class Celsius(float):
+    def __new__(cls, value):
+        if value < -273.15:
+            raise ValueError("below absolute zero")
+        return super().__new__(cls, value)          # the float value is decided here
+    def __init__(self, value):
+        self.unit = "°C"                            # __init__ can only decorate the object
+
+t = Celsius(21.5)
+print(t + 1, t.unit, isinstance(t, float))
+try:
+    Celsius(-300)
+except ValueError as e:
+    print("ValueError:", e)
+```
+
+```text
+22.5 °C True
+ValueError: below absolute zero
+```
+
+If `__new__` returns an object that is *not* an instance of the class, `__init__` is skipped — the mechanism behind factory-style constructors and interning caches. Because the call goes through `type(Cls).__call__`, a metaclass that overrides `__call__` sits around both steps for every instance, which is why it was the last line of the trace above.
 
 ---
 
@@ -355,6 +388,7 @@ Why generate source instead of writing one generic `__init__(self, **kwargs)` th
 
 - A class is an object created by calling its metaclass, `type` by default: `type(name, bases, namespace)` is class creation.
 - The order is `__prepare__` → body → `Meta.__new__` → (`__set_name__` for each attribute → parent `__init_subclass__`) → `Meta.__init__` → class decorators → name binding.
+- Instances are made in two steps too: `__new__` allocates (and decides the value of immutables), `__init__` initialises; `__init__` is skipped if `__new__` returns a foreign object.
 - `__init_subclass__` handles registries, subclass validation and class keyword arguments without metaclass conflicts; reach for it first.
 - Only a metaclass can control the namespace during body execution, give the class object its own operators, or customise `isinstance`/`issubclass`.
 - Mixing bases with unrelated metaclasses raises a metaclass conflict — the main reason libraries avoid metaclasses.

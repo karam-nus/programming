@@ -42,6 +42,7 @@ Every version-gated feature mentioned in the book, by the release that introduce
 | `ast.unparse` | 3.9 | — | [12](./12_introspection_ast_and_codegen.md) |
 | `math.nextafter`, `math.ulp` | 3.9 | — | [20](./20_bit_manipulation.md) |
 | `asyncio.to_thread` | 3.9 | — | [8](./08_concurrency_and_parallelism.md) |
+| Structural pattern matching `match`/`case` | 3.10 | 634 | [6](./06_functional_programming.md) |
 | `ParamSpec`, `Concatenate` | 3.10 | 612 | [7](./07_types_and_static_typing.md), [9](./09_decorators.md) |
 | `TypeGuard` | 3.10 | 647 | [7](./07_types_and_static_typing.md) |
 | `int.bit_count()` | 3.10 | — | [20](./20_bit_manipulation.md) |
@@ -52,6 +53,8 @@ Every version-gated feature mentioned in the book, by the release that introduce
 | Lazily materialised frames | 3.11 | — | [1](./01_from_source_to_bytecode.md) |
 | `ExceptionGroup`, `except*` | 3.11 | 654 | [8](./08_concurrency_and_parallelism.md) |
 | `asyncio.TaskGroup`, `asyncio.timeout` | 3.11 | — | [5](./05_iterators_generators_and_coroutines.md), [8](./08_concurrency_and_parallelism.md) |
+| Zero-cost `try` (exception tables) | 3.11 | — | [5](./05_iterators_generators_and_coroutines.md) |
+| `BaseException.add_note` | 3.11 | 678 | [5](./05_iterators_generators_and_coroutines.md) |
 | `Self` | 3.11 | 673 | [7](./07_types_and_static_typing.md) |
 | Powersort merge policy in `list.sort` | 3.11 | — | [19](./19_data_structure_internals.md) |
 | `contextlib.chdir` | 3.11 | — | [5](./05_iterators_generators_and_coroutines.md) |
@@ -72,6 +75,7 @@ Every version-gated feature mentioned in the book, by the release that introduce
 | `locals()` snapshot / `f_locals` proxy | 3.13 | 667 | [3](./03_scope_closures_and_binding.md) |
 | `itertools.batched(strict=True)` | 3.13 | — | [5](./05_iterators_generators_and_coroutines.md) |
 | Deferred evaluation of annotations, `annotationlib` | 3.14 | 649, 749 | [7](./07_types_and_static_typing.md) |
+| `return`/`break`/`continue` leaving `finally` → `SyntaxWarning` | 3.14 | 765 | [5](./05_iterators_generators_and_coroutines.md) |
 | Free threading officially supported | 3.14 | 779 | [8](./08_concurrency_and_parallelism.md) |
 | Incremental cycle GC | 3.14 | — | [2](./02_objects_names_and_memory.md) |
 | `multiprocessing` default `forkserver` on Linux | 3.14 | — | [8](./08_concurrency_and_parallelism.md) |

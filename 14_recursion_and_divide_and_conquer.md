@@ -10,7 +10,7 @@ title: "Chapter 14 — Recursion & Divide and Conquer"
 
 ## Overview
 
-A recursive function is an inductive proof that happens to execute: a base case, and a step that reduces the problem to smaller instances of itself. **Divide and conquer** is the special case where the subproblems are disjoint pieces of the input. This chapter treats recursion as induction, analyses divide-and-conquer running times with recurrences and the master theorem, implements merge sort, quickselect and binary search with their invariants, and converts recursion to iteration when Python's stack limit ([Chapter 6](./06_functional_programming.md)) gets in the way. When subproblems *overlap* instead of being disjoint, divide and conquer becomes dynamic programming — the subject of [Chapter 15](./15_dynamic_programming_foundations.md).
+A recursive function is an inductive proof that happens to execute: a base case, and a step that reduces the problem to smaller instances of itself. **Divide and conquer** is the special case where the subproblems are disjoint pieces of the input. This chapter treats recursion as induction, analyses divide-and-conquer running times with recurrences and the master theorem, implements merge sort, quickselect and binary search with their invariants, searches with backtracking, and converts recursion to iteration when Python's stack limit ([Chapter 6](./06_functional_programming.md)) gets in the way. When subproblems *overlap* instead of being disjoint, divide and conquer becomes dynamic programming — the subject of [Chapter 15](./15_dynamic_programming_foundations.md).
 
 <div class="diagram">
 <div class="diagram-title">Divide, conquer, combine</div>
@@ -246,6 +246,8 @@ print(first_true(0, len(xs), lambda i: xs[i] > 3), bisect.bisect_right(xs, 3))
 4 4
 ```
 
+<div class="lab" data-lab="bsearch"></div>
+
 `bisect_left` and `bisect_right` are exactly `first_true` with `>=` and `>`, implemented in C, and since 3.10 accept `key=`. Use them for sorted lists.
 
 ### Binary search on the answer
@@ -274,6 +276,74 @@ print(min_capacity([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], days=5))
 ```
 
 $\Theta(n \log S)$ where $S$ is the sum — the predicate is $\Theta(n)$ and the search takes $\log_2 S$ steps. The required insight is only monotonicity: if capacity $c$ works, every $c' > c$ works.
+
+---
+
+## Backtracking: Search With Undo
+
+| | |
+|---|---|
+| **Problem** | Enumerate or find configurations satisfying constraints (placements, assignments, subsets, paths) |
+| **Paradigm** | Depth-first search over partial solutions: choose → explore → un-choose |
+| **Time** | Exponential in the worst case; pruning decides the practical cost |
+| **Space** | $\Theta(\text{depth})$ for the partial solution and the call stack |
+| **Correctness rests on** | Every complete solution extends some partial solution the search visits; pruning only removes partials that cannot be extended |
+| **Python** | Plain recursion (depth is small) with mutable state undone on return; `itertools` for brute-force cross-checks |
+| **Failure modes** | Forgetting to undo a choice; pruning too aggressively (losing solutions); copying state at every node |
+
+When a problem asks you to *search* — not to optimise over overlapping subproblems — the tool is backtracking: extend a partial solution one decision at a time, and abandon it the moment it violates a constraint. Abandoning early is **pruning**, and it is where the speed comes from. N-Queens is the canonical example: place one queen per row so that no two share a column or diagonal.
+
+<div class="svgfig">
+<svg viewBox="0 0 780 312" width="780" role="img" aria-label="The first 8-queens solution found by the search, with columns 0 4 7 5 2 6 1 3">
+<rect x="18" y="18" width="276" height="276" fill="none" stroke="#3b4350" stroke-width="2"/>
+<rect x="20" y="20" width="34" height="34" fill="#2d333b"/><rect x="54" y="20" width="34" height="34" fill="#1c2128"/><rect x="88" y="20" width="34" height="34" fill="#2d333b"/><rect x="122" y="20" width="34" height="34" fill="#1c2128"/><rect x="156" y="20" width="34" height="34" fill="#2d333b"/><rect x="190" y="20" width="34" height="34" fill="#1c2128"/><rect x="224" y="20" width="34" height="34" fill="#2d333b"/><rect x="258" y="20" width="34" height="34" fill="#1c2128"/><text x="37" y="38" text-anchor="middle" dominant-baseline="middle" style="font-size:22px;fill:#fde047">♛</text><rect x="20" y="54" width="34" height="34" fill="#1c2128"/><rect x="54" y="54" width="34" height="34" fill="#2d333b"/><rect x="88" y="54" width="34" height="34" fill="#1c2128"/><rect x="122" y="54" width="34" height="34" fill="#2d333b"/><rect x="156" y="54" width="34" height="34" fill="#1c2128"/><rect x="190" y="54" width="34" height="34" fill="#2d333b"/><rect x="224" y="54" width="34" height="34" fill="#1c2128"/><rect x="258" y="54" width="34" height="34" fill="#2d333b"/><text x="173" y="72" text-anchor="middle" dominant-baseline="middle" style="font-size:22px;fill:#fde047">♛</text><rect x="20" y="88" width="34" height="34" fill="#2d333b"/><rect x="54" y="88" width="34" height="34" fill="#1c2128"/><rect x="88" y="88" width="34" height="34" fill="#2d333b"/><rect x="122" y="88" width="34" height="34" fill="#1c2128"/><rect x="156" y="88" width="34" height="34" fill="#2d333b"/><rect x="190" y="88" width="34" height="34" fill="#1c2128"/><rect x="224" y="88" width="34" height="34" fill="#2d333b"/><rect x="258" y="88" width="34" height="34" fill="#1c2128"/><text x="275" y="106" text-anchor="middle" dominant-baseline="middle" style="font-size:22px;fill:#fde047">♛</text><rect x="20" y="122" width="34" height="34" fill="#1c2128"/><rect x="54" y="122" width="34" height="34" fill="#2d333b"/><rect x="88" y="122" width="34" height="34" fill="#1c2128"/><rect x="122" y="122" width="34" height="34" fill="#2d333b"/><rect x="156" y="122" width="34" height="34" fill="#1c2128"/><rect x="190" y="122" width="34" height="34" fill="#2d333b"/><rect x="224" y="122" width="34" height="34" fill="#1c2128"/><rect x="258" y="122" width="34" height="34" fill="#2d333b"/><text x="207" y="140" text-anchor="middle" dominant-baseline="middle" style="font-size:22px;fill:#fde047">♛</text><rect x="20" y="156" width="34" height="34" fill="#2d333b"/><rect x="54" y="156" width="34" height="34" fill="#1c2128"/><rect x="88" y="156" width="34" height="34" fill="#2d333b"/><rect x="122" y="156" width="34" height="34" fill="#1c2128"/><rect x="156" y="156" width="34" height="34" fill="#2d333b"/><rect x="190" y="156" width="34" height="34" fill="#1c2128"/><rect x="224" y="156" width="34" height="34" fill="#2d333b"/><rect x="258" y="156" width="34" height="34" fill="#1c2128"/><text x="105" y="174" text-anchor="middle" dominant-baseline="middle" style="font-size:22px;fill:#fde047">♛</text><rect x="20" y="190" width="34" height="34" fill="#1c2128"/><rect x="54" y="190" width="34" height="34" fill="#2d333b"/><rect x="88" y="190" width="34" height="34" fill="#1c2128"/><rect x="122" y="190" width="34" height="34" fill="#2d333b"/><rect x="156" y="190" width="34" height="34" fill="#1c2128"/><rect x="190" y="190" width="34" height="34" fill="#2d333b"/><rect x="224" y="190" width="34" height="34" fill="#1c2128"/><rect x="258" y="190" width="34" height="34" fill="#2d333b"/><text x="241" y="208" text-anchor="middle" dominant-baseline="middle" style="font-size:22px;fill:#fde047">♛</text><rect x="20" y="224" width="34" height="34" fill="#2d333b"/><rect x="54" y="224" width="34" height="34" fill="#1c2128"/><rect x="88" y="224" width="34" height="34" fill="#2d333b"/><rect x="122" y="224" width="34" height="34" fill="#1c2128"/><rect x="156" y="224" width="34" height="34" fill="#2d333b"/><rect x="190" y="224" width="34" height="34" fill="#1c2128"/><rect x="224" y="224" width="34" height="34" fill="#2d333b"/><rect x="258" y="224" width="34" height="34" fill="#1c2128"/><text x="71" y="242" text-anchor="middle" dominant-baseline="middle" style="font-size:22px;fill:#fde047">♛</text><rect x="20" y="258" width="34" height="34" fill="#1c2128"/><rect x="54" y="258" width="34" height="34" fill="#2d333b"/><rect x="88" y="258" width="34" height="34" fill="#1c2128"/><rect x="122" y="258" width="34" height="34" fill="#2d333b"/><rect x="156" y="258" width="34" height="34" fill="#1c2128"/><rect x="190" y="258" width="34" height="34" fill="#2d333b"/><rect x="224" y="258" width="34" height="34" fill="#1c2128"/><rect x="258" y="258" width="34" height="34" fill="#2d333b"/><text x="139" y="276" text-anchor="middle" dominant-baseline="middle" style="font-size:22px;fill:#fde047">♛</text>
+<text x="320" y="40" class="th">First solution found: cols = [0, 4, 7, 5, 2, 6, 1, 3]</text>
+<text x="320" y="78" class="t">The search visited 2,057 partial placements</text>
+<text x="320" y="104" class="t">to find all 92 solutions.</text>
+<text x="320" y="144" class="ts">Trying every permutation of columns: 8! = 40,320</text>
+<text x="320" y="168" class="ts">Trying every placement, one per row: 8⁸ = 16,777,216</text>
+<text x="320" y="208" class="ts">Constraint checks are O(1): three sets record the</text>
+<text x="320" y="230" class="ts">occupied columns, r − c diagonals and r + c diagonals.</text>
+</svg>
+</div>
+
+```python
+import itertools
+
+def n_queens(n):
+    cols, diag, anti = set(), set(), set()
+    solutions, nodes = [], 0
+    placement = []
+    def place(r):
+        nonlocal nodes
+        nodes += 1
+        if r == n:
+            solutions.append(placement.copy())
+            return
+        for c in range(n):
+            if c in cols or r - c in diag or r + c in anti:
+                continue                                     # prune: this partial can never complete
+            cols.add(c); diag.add(r - c); anti.add(r + c); placement.append(c)       # choose
+            place(r + 1)                                                             # explore
+            cols.remove(c); diag.remove(r - c); anti.remove(r + c); placement.pop()  # un-choose
+    place(0)
+    return solutions, nodes
+
+def brute(n):
+    return [list(p) for p in itertools.permutations(range(n))
+            if all(abs(p[i] - p[j]) != j - i for i in range(n) for j in range(i + 1, n))]
+
+for n in range(1, 8):
+    assert n_queens(n)[0] == brute(n)
+sols, nodes = n_queens(8)
+print(len(sols), nodes, sols[0])
+```
+
+```text
+92 2057 [0, 4, 7, 5, 2, 6, 1, 3]
+```
+
+Backtracking and DP are siblings. Both explore a tree of decisions; DP applies when different branches reach the *same* subproblem (so answers can be cached), backtracking when branches are distinct but most of them die early. Many real searches combine both: memoize what can be shared, prune what cannot succeed, and order choices so that good solutions are found first (the idea behind branch-and-bound and SAT solvers).
 
 ---
 
@@ -318,6 +388,7 @@ What the stack must hold depends on what work remains after the recursive call r
 - Merge sort is $\Theta(n \log n)$ (measured: comparisons / $n\log_2 n$ ≈ 0.9); its merge step extends to inversion counting; in practice use `sorted`.
 - Quickselect finds order statistics in expected $\Theta(n)$ by recursing into one side; random pivots avoid the quadratic worst case.
 - Write binary search from an invariant (`< lo` false, `≥ hi` true); `bisect` implements it; binary search on the answer needs only a monotone feasibility predicate.
+- Backtracking searches by choose → explore → un-choose; pruning invalid partial solutions turned 8-queens from 40,320 permutations into 2,057 visited nodes.
 - Convert recursion to an explicit stack whenever depth can approach $n$; post-order work needs a visited marker.
 
 ## References

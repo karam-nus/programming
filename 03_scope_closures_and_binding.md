@@ -52,6 +52,13 @@ UnboundLocalError: cannot access local variable 'count' where it is not associat
 
 The augmented assignment binds `count`, so the compiler made `count` local for the whole function and emitted `LOAD_FAST count` for the read half of `+=`. The local slot is empty, so the load fails. The global `count = 0` is never consulted. The fix is to say what you mean:
 
+<div class="comic">
+<div class="panel"><span class="cap">compile time</span><div class="who">Compiler</div><div class="bubble">Scanning <code>increment()</code>… I see <code>count += 1</code>. That <em>assigns</em> count.</div><div class="bubble think">So count is LOCAL for the whole function. Emit <code>LOAD_FAST count</code>.</div></div>
+<div class="panel"><span class="cap">run time</span><div class="who">You</div><div class="bubble r">But <code>count = 0</code> is right there at module level!</div><div class="who">Interpreter</div><div class="bubble">Slot <code>count</code> in this frame is empty. I never look at globals for a local.</div></div>
+<div class="panel dark"><div class="sfx">UnboundLocalError!</div><div class="bubble">cannot access local variable 'count' where it is not associated with a value</div></div>
+<div class="panel"><span class="cap">the fix</span><div class="who">You</div><div class="bubble r">Say what I mean: <code>global count</code> — or better, pass the value in and return the new one.</div></div>
+</div>
+
 | Declaration | Effect | Choose this when |
 |-------------|--------|------------------|
 | **`global count`** | binds/reads the module-level name | true module state (rare; prefer passing values or an object) |
@@ -119,6 +126,27 @@ print([f() for f in callbacks])
 ```text
 [2, 2, 2]
 ```
+
+<div class="svgfig">
+<svg viewBox="0 0 820 250" width="820" role="img" aria-label="Late binding: three closures share one cell; the default-argument fix gives each its own value">
+<text x="20" y="24" class="th" style="fill:#fca5a5">late binding: three closures, ONE cell</text>
+<text x="440" y="24" class="th" style="fill:#4ade80">lambda i=i: i — one default per closure</text>
+<rect x="20" y="44" width="150" height="34" rx="6" class="box"/><text x="95" y="61" text-anchor="middle" class="tm">callbacks[0]</text>
+<rect x="20" y="104" width="150" height="34" rx="6" class="box"/><text x="95" y="121" text-anchor="middle" class="tm">callbacks[1]</text>
+<rect x="20" y="164" width="150" height="34" rx="6" class="box"/><text x="95" y="181" text-anchor="middle" class="tm">callbacks[2]</text>
+<rect x="250" y="94" width="130" height="54" rx="8" fill="#2a1622" stroke="#f9a8d4" stroke-width="2"/><text x="315" y="113" text-anchor="middle" class="ts">cell for i</text><text x="315" y="134" text-anchor="middle" class="tm" style="fill:#f9a8d4">→ 2</text>
+<path d="M170 61 C 210 61, 220 110, 250 112" class="ln warn"/><path d="M170 121 L250 121" class="ln warn"/><path d="M170 181 C 210 181, 220 132, 250 130" class="ln warn"/>
+<text x="20" y="228" class="ts">every call reads the cell after the loop → 2, 2, 2</text>
+<rect x="440" y="44" width="150" height="34" rx="6" class="box"/><text x="515" y="61" text-anchor="middle" class="tm">by_default[0]</text>
+<rect x="440" y="104" width="150" height="34" rx="6" class="box"/><text x="515" y="121" text-anchor="middle" class="tm">by_default[1]</text>
+<rect x="440" y="164" width="150" height="34" rx="6" class="box"/><text x="515" y="181" text-anchor="middle" class="tm">by_default[2]</text>
+<rect x="650" y="44" width="150" height="34" rx="6" fill="#12221a" stroke="#4ade80"/><text x="725" y="61" text-anchor="middle" class="tm">__defaults__ (0,)</text>
+<rect x="650" y="104" width="150" height="34" rx="6" fill="#12221a" stroke="#4ade80"/><text x="725" y="121" text-anchor="middle" class="tm">__defaults__ (1,)</text>
+<rect x="650" y="164" width="150" height="34" rx="6" fill="#12221a" stroke="#4ade80"/><text x="725" y="181" text-anchor="middle" class="tm">__defaults__ (2,)</text>
+<path d="M590 61 L650 61" class="ln hot"/><path d="M590 121 L650 121" class="ln hot"/><path d="M590 181 L650 181" class="ln hot"/>
+<text x="440" y="228" class="ts">each function object keeps its own value → 0, 1, 2</text>
+</svg>
+</div>
 
 All three lambdas close over the same `i`, which is `2` when they finally run. Three fixes, in order of preference:
 

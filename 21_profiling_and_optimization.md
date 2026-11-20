@@ -50,6 +50,13 @@ Rules that make numbers trustworthy, all followed by this book's `bench/` script
 
 From the command line: `python -m timeit -s "xs = list(range(1000))" "sum(xs)"`.
 
+<div class="term"><div class="term-bar">bash — CPython 3.13.18 · Xeon @ 2.1 GHz (this book's machine)</div><pre><span class="t-prompt">$</span> python3 -m timeit -s "xs = list(range(10_000)); s = set(xs)" "9_999 in xs"
+5000 loops, best of 5: <span class="t-hl">55.2 usec</span> per loop
+<span class="t-prompt">$</span> python3 -m timeit -s "xs = list(range(10_000)); s = set(xs)" "9_999 in s"
+10000000 loops, best of 5: <span class="t-hl">23.1 nsec</span> per loop</pre></div>
+
+The command-line form picks the loop count automatically and reports the best of five — here a 2,400× gap between a list scan and a set probe at $n = 10{,}000$.
+
 ---
 
 ## Deterministic Profiling: `cProfile`
@@ -93,6 +100,8 @@ print(max((t for t in top if t[0] in ("parse", "featurize")), key=lambda t: t[1]
 ```text
 featurize
 ```
+
+<div class="fig"><img src="assets/images/flame_pipeline.svg" alt="Icicle graph of the pipeline: featurize takes most of the width, parse and its split calls the rest"><div class="figcap">An icicle (inverted flame) graph of the same pipeline, from a deterministic stack profile in <code>tools/make_figures.py</code>. Width is time; each row is one level deeper in the call stack. Sampling profilers such as py-spy draw the same picture from a live process.</div></div>
 
 The profile points at `featurize`, and the cause is visible in its body: membership testing on a growing list, $\Theta(V)$ per token. In practice, run `python -m cProfile -o out.prof script.py` and explore `out.prof` with `pstats` (`sort_stats("cumulative").print_stats(15)`) or a viewer such as `snakeviz`. Read **cumulative** time to find the expensive subtree and **tottime** (time in the function itself, excluding callees) to find the hot leaf.
 
@@ -166,6 +175,8 @@ From `bench/optimization_ladder.py` (CPython 3.13.18, Xeon @ 2.1 GHz, median of 
 | **2. Builtins** | `for` loop accumulating `math.sqrt(x)` | `sum(map(math.sqrt, xs))` | 3.04 → 1.91 | 1.6× | a hot loop has a builtin equivalent |
 | **3. Micro: cache a global in a local** | `math.sqrt` looked up each iteration | `sqrt=math.sqrt` default arg | 3.04 → 2.49 | 1.2× | rarely — after the above, in a measured hot loop |
 | **Folk rule: avoid `s += piece`** | `s += str(i)` | `"".join(map(str, …))` | 6.42 → 6.82 | **none** | use `join` for clarity and portability, not speed, on CPython |
+
+<div class="fig"><img src="assets/images/optimization_ladder.svg" alt="Three bar charts: dedup with a list 61 ms vs dict 0.20 ms; string building 6.4 vs 6.8 ms; sqrt loop 3.04, 2.49 and 1.91 ms"><div class="figcap">Generated from <code>bench/optimization_ladder.py</code>. Note the different y-axis scales.</div></div>
 
 The ordering is the lesson. The data-structure change is worth more than every micro-optimisation in this chapter combined, and it is the change a profile points at directly. The `s +=` result reflects a CPython-specific optimisation: when the left operand's refcount is 1, `BINARY_OP` resizes the string in place instead of copying. It is not guaranteed by the language — PyPy and other implementations may be quadratic — and it breaks as soon as another reference to `s` exists, so `"".join` remains the correct idiom; but "`+=` is slow" is no longer true on CPython as a measured fact.
 

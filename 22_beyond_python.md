@@ -33,6 +33,8 @@ From `bench/ffi_boundary.py` (CPython 3.13.18, NumPy 2.5.3, Xeon @ 2.1 GHz, $\co
 | **`math.cos` per element** (a C builtin) | 50.1 | 1.0× | scalar code, small $n$ |
 | **`numpy.cos(arr)`** — one call for the whole buffer | 6.1 | 8.2× faster | any elementwise work on arrays |
 
+<div class="fig"><img src="assets/images/ffi_boundary.svg" alt="Bar chart: ctypes per-element 299.5 ms, math.cos per-element 50.1 ms, numpy.cos one call 6.1 ms"><div class="figcap">Generated from <code>bench/ffi_boundary.py</code>.</div></div>
+
 All three run the *same* C `cos`. What differs is how often execution crosses between the interpreter and native code. `ctypes` performs argument conversion and a dynamic foreign call each time (~250 ns of overhead per call); `math.cos` is a builtin with a fast calling convention (~20 ns of call overhead plus the list comprehension's per-element bytecode); `numpy.cos` crosses once and loops over a contiguous `double` buffer in C (and may use SIMD). The lesson generalises to every route below: **move the loop, not just the body**. A Rust or C++ function called a million times from a Python loop is often *slower* than the pure-Python version.
 
 ---
