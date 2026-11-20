@@ -1,0 +1,125 @@
+title: "Programming — The Complete Guide"
+description: "From Bytecode to Dynamic Programming: how Python really executes, how to write code that writes code, and the algorithmic techniques that recur in real work."
+baseurl: "/programming"
+url: "https://karam-nus.github.io"
+
+markdown: kramdown
+highlighter: rouge
+
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: "highlight"
+    span:
+      line_numbers: false
+    block:
+      line_numbers: true
+
+plugins:
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: false
+
+include:
+  - README.md
+
+exclude:
+  - tools/
+  - "bench/*.py"
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+
+navigation:
+  - title: "Home"
+    url: "/"
+  - title: "Orientation"
+    url: ""
+  - title: "00 — Grand Overview"
+    url: "/00_grand_overview"
+  - title: "Part I — How Python Executes"
+    url: ""
+  - title: "01 — Source to Bytecode"
+    url: "/01_from_source_to_bytecode"
+  - title: "02 — Objects, Names & Memory"
+    url: "/02_objects_names_and_memory"
+  - title: "03 — Scope, Closures & Binding"
+    url: "/03_scope_closures_and_binding"
+  - title: "04 — Data Model & Attribute Lookup"
+    url: "/04_the_data_model_and_attribute_lookup"
+  - title: "05 — Iterators, Generators & Coroutines"
+    url: "/05_iterators_generators_and_coroutines"
+  - title: "Part II — Paradigms"
+    url: ""
+  - title: "06 — Functional Programming"
+    url: "/06_functional_programming"
+  - title: "07 — Types & Static Typing"
+    url: "/07_types_and_static_typing"
+  - title: "08 — Concurrency & Parallelism"
+    url: "/08_concurrency_and_parallelism"
+  - title: "Part III — Metaprogramming"
+    url: ""
+  - title: "09 — Decorators"
+    url: "/09_decorators"
+  - title: "10 — Descriptors"
+    url: "/10_descriptors"
+  - title: "11 — Metaclasses & Class Creation"
+    url: "/11_metaclasses_and_class_creation"
+  - title: "12 — Introspection, AST & Codegen"
+    url: "/12_introspection_ast_and_codegen"
+  - title: "Part IV — Algorithmic Techniques"
+    url: ""
+  - title: "13 — Complexity & Cost Models"
+    url: "/13_complexity_and_cost_models"
+  - title: "14 — Recursion & Divide and Conquer"
+    url: "/14_recursion_and_divide_and_conquer"
+  - title: "15 — Dynamic Programming I"
+    url: "/15_dynamic_programming_foundations"
+  - title: "16 — Dynamic Programming II"
+    url: "/16_dynamic_programming_patterns"
+  - title: "17 — Greedy Algorithms"
+    url: "/17_greedy_algorithms"
+  - title: "18 — Graph Algorithms"
+    url: "/18_graph_algorithms"
+  - title: "19 — Data Structure Internals"
+    url: "/19_data_structure_internals"
+  - title: "20 — Bit Manipulation"
+    url: "/20_bit_manipulation"
+  - title: "Part V — Performance"
+    url: ""
+  - title: "21 — Profiling & Optimization"
+    url: "/21_profiling_and_optimization"
+  - title: "22 — Beyond Python"
+    url: "/22_beyond_python"
+  - title: "Part VI — Synthesis"
+    url: ""
+  - title: "23 — Problem-Solving Playbook"
+    url: "/23_problem_solving_playbook"
+  - title: "Appendices"
+    url: ""
+  - title: "A — Glossary"
+    url: "/appendix_a_glossary"
+  - title: "B — Complexity Reference"
+    url: "/appendix_b_complexity_reference"
+  - title: "C — DP Catalogue"
+    url: "/appendix_c_dp_catalogue"
+  - title: "D — Python Versions"
+    url: "/appendix_d_python_versions"
+  - title: "E — Bibliography"
+    url: "/appendix_e_bibliography"
+  - title: "Meta"
+    url: ""
+  - title: "Benchmark Results"
+    url: "/bench/RESULTS"
+  - title: "Authoring Prompt"
+    url: "/PROMPT"
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: "default"
