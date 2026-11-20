@@ -421,4 +421,4 @@ True
 
 ---
 
-**Next:** [Chapter 6 — Functional Programming](./06_functional_programming.md) — back to Part II: functions as values, without the metaprogramming.
+**Next:** [Chapter 13 — Complexity & Cost Models](./13_complexity_and_cost_models.md) — Part IV begins: from how code runs to how fast an algorithm can be.

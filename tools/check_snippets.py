@@ -20,6 +20,7 @@ import io
 import re
 import sys
 import traceback
+import types
 from pathlib import Path
 
 FENCE = re.compile(r"^```python[ \t]*\n(.*?)^```[ \t]*\n(?:\s*```text[ \t]*\n(.*?)^```[ \t]*$)?", re.M | re.S)
@@ -51,7 +52,9 @@ def skipped(code: str) -> str | None:
 
 
 def run_chapter(path: Path, verbose: bool, strict: bool = False) -> tuple[int, int, int]:
-    ns: dict = {"__name__": f"chapter_{path.stem}"}
+    module = types.ModuleType(f"chapter_{path.stem}")     # a real module, so pickle can find names
+    sys.modules[module.__name__] = module
+    ns = module.__dict__
     ok = skip = fail = 0
     for line_no, code, expected in blocks(path.read_text(encoding="utf-8")):
         reason = skipped(code)
