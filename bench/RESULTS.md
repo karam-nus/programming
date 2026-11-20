@@ -61,3 +61,27 @@ Re-run any script with `python3 bench/<name>.py` from the repo root's `bench/` d
 |---|---:|---:|---:|
 | CPU: sum of squares, 2M iters/job | 0.66 | 0.65 | 0.25 |
 | I/O: sleep 50 ms/job | 0.40 | 0.10 | 0.11 |
+
+## optimization_ladder.py
+
+> CPython 3.13.18, Linux x86_64, x86_64; median of 5 repeats
+
+| rung | variant | ms |
+|---|---|---:|
+| data structure: dedup 5000 strings | `dedup_list` | 61.16 |
+| data structure: dedup 5000 strings | `dedup_dict` | 0.20 |
+| string building: 100k pieces | `concat_plus` | 6.42 |
+| string building: 100k pieces | `concat_join` | 6.82 |
+| loop body: sum of sqrt, 100k floats | `sqrt_sum_global` | 3.04 |
+| loop body: sum of sqrt, 100k floats | `sqrt_sum_local` | 2.49 |
+| loop body: sum of sqrt, 100k floats | `sqrt_sum_builtin` | 1.91 |
+
+## ffi_boundary.py
+
+> CPython 3.13.18, Linux x86_64, x86_64; NumPy 2.5.3; cos over 1,000,000 floats; median of 5
+
+| variant | ms | vs math.cos loop |
+|---|---:|---:|
+| ctypes libm.cos, one call per element | 299.5 | 5.98x |
+| math.cos, one call per element | 50.1 | 1.00x |
+| numpy.cos on the whole array (one call) | 6.1 | 0.12x |
