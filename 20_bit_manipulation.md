@@ -64,7 +64,7 @@ All follow from how binary subtraction borrows: $x - 1$ flips the lowest set bit
 |------------|--------|:---:|-----|
 | `x & (x - 1)` | clear the lowest set bit | `0b10110000` | count bits (Kernighan), power-of-two test |
 | `x & -x` | isolate the lowest set bit ("lowbit") | `0b00000100` | Fenwick trees, iterate set bits |
-| `x \| (x + 1)` | set the lowest clear bit | `0b10110101` | |
+| <code>x &#124; (x + 1)</code> | set the lowest clear bit | `0b10110101` | |
 | `x ^ (x >> 1)` | binary → Gray code | | Gray-code enumeration |
 | `x > 0 and x & (x - 1) == 0` | is a power of two | `False` | alignment, buffer sizes |
 | `x.bit_length()` | $\lfloor \log_2 x \rfloor + 1$ for $x > 0$ | 8 | integer log₂ without floats |
@@ -89,6 +89,10 @@ print(list(set_bits(x)), [i for i in range(8) if x >> i & 1])
 [2, 4, 5, 7] [2, 4, 5, 7]
 ```
 
+Type any integer — negative ones too — and see every identity at once. Switch to float mode to take an IEEE-754 double apart (the subject of the last section):
+
+<div class="lab" data-lab="bits"></div>
+
 `int.bit_length()` is exact for any size, unlike `math.log2`, which rounds: `math.log2(2**53 + 1)` returns exactly `53.0`. Use `bit_length` for integer logarithms.
 
 **Hamming distance** between binary codes — the comparison metric for binary embeddings, locality-sensitive hashing and perceptual image hashes — is `(a ^ b).bit_count()`.
@@ -103,8 +107,8 @@ An integer $S$ with bit $i$ set represents a set containing $i$. With $n \le 64$
 |---------------|----------------|
 | $\{i\}$ | `1 << i` |
 | $i \in S$ | `S >> i & 1` |
-| $S \cup \{i\}$, $S \setminus \{i\}$ | `S \| 1 << i`, `S & ~(1 << i)` |
-| $S \cup T$, $S \cap T$, $S \setminus T$ | `S \| T`, `S & T`, `S & ~T` |
+| $S \cup \{i\}$, $S \setminus \{i\}$ | <code>S &#124; 1 &lt;&lt; i</code>, `S & ~(1 << i)` |
+| $S \cup T$, $S \cap T$, $S \setminus T$ | <code>S &#124; T</code>, `S & T`, `S & ~T` |
 | $T \subseteq S$ | `T & S == T` |
 | $\lvert S\rvert$ | `S.bit_count()` |
 | full set of $n$ | `(1 << n) - 1` |

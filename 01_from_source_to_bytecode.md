@@ -150,6 +150,10 @@ CPython 3.13 output (bytecode changes **every** release — never memorise it, a
 
 Read it as a **stack machine**: `LOAD_*` pushes, `BINARY_OP` pops two and pushes one, `STORE_FAST` pops into a numbered slot. Locals are accessed by index (`STORE_FAST 2`) into a fixed-size array — not by name in a dict. That is why local variables are the fastest names in Python and why `locals()` inside a function is a *snapshot*, not the storage.
 
+Step through the same function and watch the stack and the slots change. The listing, and the path through it, were captured from CPython 3.13 with an opcode trace — including a detail the static listing hides: when `FOR_ITER` runs out, 3.13 pops the iterator and jumps *past* `END_FOR` and `POP_TOP`, which therefore never execute on this path.
+
+<div class="lab" data-lab="bytecode"></div>
+
 The code object's fields are inspectable:
 
 ```python

@@ -90,6 +90,10 @@ print(max_non_overlapping([(1, 4), (3, 5), (0, 6), (5, 7), (3, 9), (5, 9), (6, 1
 [(1, 4), (5, 7), (8, 11), (12, 16)]
 ```
 
+Run all four rules on the same eleven intervals. Only earliest-finish reaches the optimum of 4 on every input — the others can be beaten, and on this input some are:
+
+<div class="lab" data-lab="intervals"></div>
+
 Why the plausible alternatives fail — each has a three-interval counterexample:
 
 | Greedy rule | Counterexample | Greedy picks | Optimal |

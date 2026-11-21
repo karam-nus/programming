@@ -10,7 +10,7 @@ title: "Chapter 13 — Complexity & Cost Models"
 
 ## Overview
 
-Part IV is about choosing algorithms, and that requires two models of cost. The **asymptotic model** ($O$, $\Theta$, $\Omega$) predicts how cost grows with input size and is machine-independent. The **constant-factor model** predicts what one step costs on a real interpreter — and in CPython the gap between a C-implemented builtin and an equivalent Python loop is often larger than the gap between $O(n)$ and $O(n \log n)$ at realistic sizes. This chapter defines both carefully, derives amortized $O(1)$ `list.append` from CPython's actual growth formula, and presents a measured cost table that the rest of Part IV relies on. Every built-in cost quoted in the book is collected in [Appendix B](./appendix_b_complexity_reference.md).
+Part IV is about choosing algorithms, and that requires two models of cost. The **asymptotic model** ($O$, $\Theta$, $\Omega$) predicts how cost grows with input size and is machine-independent. The **constant-factor model** predicts what one step costs on a real interpreter — and in CPython the gap between a C-implemented builtin and an equivalent Python loop is often larger than the gap between $O(n)$ and $O(n \log n)$ at realistic sizes. This chapter defines both carefully, derives amortized $O(1)$ `list.append` from CPython's actual growth formula, presents a measured cost table that the rest of Part IV relies on, and ends with what to do when a problem is NP-hard and no polynomial algorithm is known. Every built-in cost quoted in the book is collected in [Appendix B](./appendix_b_complexity_reference.md).
 
 <div class="diagram">
 <div class="diagram-title">Two cost models, one decision</div>
@@ -47,6 +47,8 @@ For non-negative functions $f, g$ of input size $n$:
 - $f(n) = \Theta(g(n))$ if both hold — a **tight bound**.
 
 Two common misuses. First, saying $O$ when $\Theta$ is meant: binary search is $O(n)$ (true, useless) and $\Theta(\log n)$ (informative). This book says $\Theta$ whenever the tight bound is known. Second, conflating **worst-case**, **average-case** and **amortized**: a dict lookup is $\Theta(1)$ average but $\Theta(n)$ worst case (all keys colliding); `list.append` is $\Theta(n)$ worst case for one call but $\Theta(1)$ amortized over a sequence.
+
+<div class="lab" data-lab="growth"></div>
 
 | Growth | Name | $n$ feasible in ~1 s of Python (~$10^7$ simple steps) | Typical source |
 |--------|------|:---:|----------------|
@@ -94,6 +96,12 @@ print([(m + (m >> 3) + 6) & ~3 for m, _ in seen])
 [4, 8, 16, 24, 32, 40, 52, 64, 76, 92, 108, 128, 148]
 ```
 
+<div class="fig"><img src="assets/images/list_growth.svg" alt="Left: list capacity steps above the used-length diagonal; right: total pointer copies divided by n stays below the bound of 9"><div class="figcap">Exact: CPython's growth rule, asserted equal to <code>sys.getsizeof</code> on this interpreter by <code>tools/make_figures.py</code>.</div></div>
+
+Append into a list yourself and watch the spare slots, the resizes, and the running copies-per-append ratio:
+
+<div class="lab" data-lab="append"></div>
+
 The formula reproduces every observed capacity.
 
 **The derivation.** Asymptotically each resize multiplies capacity by $r = 9/8$. A resize at size $s$ copies at most $s$ pointers. The resizes that occur while growing to $n$ happen at sizes $\approx n, n/r, n/r^2, \dots$, so total copying is bounded by the geometric series
@@ -124,7 +132,7 @@ for n in (10**3, 10**5, 10**6):
 
 The ratio stays below the bound of 9 and approaches it as $n$ grows (the $+6$ term makes small lists grow proportionally faster, so they resize less often than the asymptotic ratio predicts). In practice `realloc` can often extend the block in place, so real copying is lower still. Contrast: growing by a **constant** $k$ slots each time costs $\sum n/k \cdot$ (sizes) $= \Theta(n^2/k)$ total — quadratic. **Geometric growth is what makes the amortized bound constant**, whatever the ratio; CPython's small ratio trades a higher amortized constant for less wasted memory (at most 12.5% slack vs 100% for doubling).
 
-The same argument covers `dict` and `set` resizing (they grow to keep the load factor below 2/3), `bytearray`, and `str.join` (which precomputes the total size — why `"".join(parts)` is linear while `s += part` in a loop *can* be quadratic; CPython special-cases `s += t` in place when `s` has no other references, but that optimisation is not guaranteed).
+The same argument covers `dict` and `set` resizing (dicts keep the load factor at most 2/3, sets below 60% — [Chapter 19](./19_data_structure_internals.md)), `bytearray`, and `str.join` (which precomputes the total size — why `"".join(parts)` is linear while `s += part` in a loop *can* be quadratic; CPython special-cases `s += t` in place when `s` has no other references, but that optimisation is not guaranteed).
 
 ---
 
@@ -149,12 +157,16 @@ On CPython every Python-level operation pays instruction dispatch ([Chapter 1](.
 | **`sum(xs)`**, $n = 1000$ | 5 386 | 478 | $\Theta(n)$ |
 | **explicit `for` loop sum**, $n = 1000$ | 18 242 | 1 619 | $\Theta(n)$ |
 
+<div class="fig"><img src="assets/images/cost_model.svg" alt="Log-scale bar chart of CPython operation costs: constant-time operations cluster between 10 and 30 ns, linear-time operations at n=1000 range from 251 ns to 18 µs"><div class="figcap">The same table on a log axis. Generated from <code>bench/cost_model.py</code>.</div></div>
+
 What the table says, quantitatively:
 
 1. **Most single operations cost 10–30 ns** — within 3× of each other. Micro-optimising which $\Theta(1)$ operation you use rarely matters.
 2. **An $\Theta(n)$ operation hidden in a loop dominates everything.** `x in some_list` inside a loop over $n$ items is $\Theta(n^2)$; at $n = 1000$ each membership test costs ~250 dict lookups. Converting the list to a set once is the single most common real-world speedup.
 3. **Builtins beat loops by ~3.4×** at the same complexity: `sum` runs its loop in C, the `for` loop dispatches ~6 instructions per element. Prefer `sum`, `max`, `any`, `sorted`, `"".join`, `collections.Counter`, `itertools` — and NumPy for numeric arrays, where the factor is 10–100× ([Chapter 22](./22_beyond_python.md)).
 4. **`insert(0)` is 10× `deque.appendleft` at $n = 1000$** and the gap grows linearly. Queues use `collections.deque` ([Chapter 18](./18_graph_algorithms.md)'s BFS).
+
+<div class="fig"><img src="assets/images/front_insert.svg" alt="Log-log plot: list front insertion cost grows linearly with n from 133 ns to 609 µs, deque stays flat near 50-90 ns"><div class="figcap">Front insertion as the container grows: Θ(n) vs Θ(1), measured by <code>bench/front_insert.py</code>.</div></div>
 
 ### Measuring your own operations
 
@@ -185,6 +197,55 @@ Space has the same notation, and three Python-specific costs:
 
 ---
 
+## When No Efficient Algorithm Is Known: NP-Hardness
+
+Everything above assumes a polynomial algorithm exists. For a large, important class of problems none is known, and most researchers believe none exists. The vocabulary, stated for **decision problems** (yes/no questions):
+
+| Class | Meaning | Example |
+|-------|---------|---------|
+| **P** | solvable in polynomial time | shortest path, sorting, LCS, 2-coloring |
+| **NP** | a "yes" answer has a certificate checkable in polynomial time | "is there a subset summing to $T$?" — check a proposed subset in $\Theta(n)$ |
+| **NP-complete** | in NP, and every NP problem reduces to it in polynomial time | SAT, subset sum, graph 3-coloring, Hamiltonian cycle |
+| **NP-hard** | at least as hard as NP-complete; need not be in NP | TSP optimisation, longest simple path, optimal bin packing |
+
+The asymmetry between *checking* and *finding* is the whole idea:
+
+```python
+import itertools
+
+def verify(nums, subset, target):            # Θ(n): checking a certificate is easy
+    return set(subset) <= set(range(len(nums))) and sum(nums[i] for i in subset) == target
+
+def search(nums, target):                    # Θ(2ⁿ · n): no known way to avoid trying subsets in general
+    for k in range(len(nums) + 1):
+        for subset in itertools.combinations(range(len(nums)), k):
+            if sum(nums[i] for i in subset) == target:
+                return subset
+    return None
+
+nums = [267, 961, 1153, 1000, 1922, 493, 1598, 869, 1766, 1246]
+cert = search(nums, 5842)
+print(cert, verify(nums, cert, 5842), 2 ** len(nums), "subsets in the worst case")
+```
+
+```text
+(1, 3, 7, 8, 9) True 1024 subsets in the worst case
+```
+
+**Recognising NP-hardness saves time:** if a problem is "choose a subset / an order / an assignment that optimises something under combinatorial constraints", look it up before designing an algorithm. Then pick a strategy:
+
+| Situation | Strategy | Chapter |
+|-----------|----------|:---:|
+| **$n \le 20$–$25$** | exact exponential search: bitmask DP (Held–Karp $\Theta(2^n n^2)$), backtracking with pruning | [14](./14_recursion_and_divide_and_conquer.md), [16](./16_dynamic_programming_patterns.md) |
+| **Numbers are small** (weights, capacities) | pseudo-polynomial DP — knapsack and subset sum are only *weakly* NP-hard | [15](./15_dynamic_programming_foundations.md), [20](./20_bit_manipulation.md) |
+| **Good is enough, with a guarantee** | approximation: greedy set cover within $\ln n$ of optimal; Christofides within 1.5× for metric TSP | [17](./17_greedy_algorithms.md) |
+| **Good is enough, no guarantee needed** | heuristics: local search, simulated annealing, beam search | [16](./16_dynamic_programming_patterns.md) |
+| **Real instance, real constraints** | hand it to a solver: ILP (OR-Tools, HiGHS via PuLP/Pyomo), CP-SAT, SAT (PySAT) | — |
+
+Industrial solvers routinely handle NP-hard instances with thousands of variables, because real instances have structure that worst-case bounds ignore. Writing your own branch-and-bound is rarely the right first move.
+
+---
+
 ## Choosing by Both Models
 
 <div class="diagram">
@@ -210,6 +271,7 @@ Space has the same notation, and three Python-specific costs:
 - Single CPython operations cost ~10–30 ns and differ by under 3×; a $\Theta(n)$ operation hidden in a loop is the usual cause of slowness.
 - C-implemented builtins beat equivalent Python loops by ~3× at the same complexity; NumPy by far more.
 - Space costs in Python include large object headers, recursion depth capped at 1000 frames, and unbounded memoization caches.
+- NP-hard problems have no known polynomial algorithm; recognise them early and choose exact-exponential search for small $n$, pseudo-polynomial DP for small numbers, approximation or heuristics for good-enough answers, or an ILP/SAT solver.
 
 ## References
 
@@ -219,6 +281,8 @@ Space has the same notation, and three Python-specific costs:
 | `Objects/listobject.c` — `list_resize` | CPython | github.com/python/cpython | The over-allocation formula |
 | TimeComplexity | Python Wiki | wiki.python.org/moin/TimeComplexity | Average/worst costs of built-in operations |
 | `timeit` docs | Python docs | docs.python.org/3/library/timeit.html | Measurement methodology |
+| *Computers and Intractability* | Garey, Johnson, 1979 | W. H. Freeman | NP-completeness, reductions, weak vs strong NP-hardness |
+| `bench/front_insert.py` | this repo | [bench/RESULTS.md](./bench/RESULTS.md) | Front-insertion scaling |
 | `bench/cost_model.py` | this repo | [bench/RESULTS.md](./bench/RESULTS.md) | Measured constant-factor table |
 
 ---

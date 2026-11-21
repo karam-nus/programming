@@ -162,6 +162,36 @@ print(type(dogs[-1]).__name__)               # runtime happily ran the unsound c
 Animal
 ```
 
+<div class="svgfig">
+<svg viewBox="0 0 820 300" width="820" role="img" aria-label="Variance: which way subtyping arrows point for list, Sequence and Callable">
+<text x="20" y="26" class="th">Dog ≤ Animal. Which way does the arrow go for the container?</text>
+<g>
+<rect x="20" y="50" width="240" height="210" rx="10" class="box"/><text x="140" y="76" text-anchor="middle" class="th" style="fill:#fca5a5">list[T] — invariant</text>
+<rect x="60" y="100" width="160" height="34" rx="6" class="box"/><text x="140" y="117" text-anchor="middle" class="tm">list[Dog]</text>
+<rect x="60" y="190" width="160" height="34" rx="6" class="box"/><text x="140" y="207" text-anchor="middle" class="tm">list[Animal]</text>
+<text x="140" y="162" text-anchor="middle" class="t" style="fill:#fca5a5">✕  no arrow either way</text>
+<text x="140" y="246" text-anchor="middle" class="ts">read AND write → no substitution</text>
+</g>
+<g>
+<rect x="290" y="50" width="240" height="210" rx="10" class="box"/><text x="410" y="76" text-anchor="middle" class="th" style="fill:#4ade80">Sequence[T] — covariant</text>
+<rect x="330" y="100" width="160" height="34" rx="6" class="box"/><text x="410" y="117" text-anchor="middle" class="tm">Sequence[Dog]</text>
+<rect x="330" y="190" width="160" height="34" rx="6" class="box"/><text x="410" y="207" text-anchor="middle" class="tm">Sequence[Animal]</text>
+<path d="M410 136 L410 184" class="ln hot" stroke-width="3"/><path d="M402 176 L410 188 L418 176" class="ln hot" stroke-width="3"/>
+<text x="420" y="162" class="ts">same direction</text>
+<text x="410" y="246" text-anchor="middle" class="ts">read only → Dogs are Animals</text>
+</g>
+<g>
+<rect x="560" y="50" width="240" height="210" rx="10" class="box"/><text x="680" y="76" text-anchor="middle" class="th" style="fill:#c4b5fd">Callable[[T], None] — contra</text>
+<rect x="590" y="100" width="180" height="34" rx="6" class="box"/><text x="680" y="117" text-anchor="middle" class="tm">Callable[[Animal], …]</text>
+<rect x="590" y="190" width="180" height="34" rx="6" class="box"/><text x="680" y="207" text-anchor="middle" class="tm">Callable[[Dog], …]</text>
+<path d="M680 136 L680 184" class="ln" stroke-width="3" style="stroke:#c4b5fd"/><path d="M672 176 L680 188 L688 176" class="ln" stroke-width="3" style="stroke:#c4b5fd"/>
+<text x="690" y="162" class="ts">arrow flips</text>
+<text x="680" y="246" text-anchor="middle" class="ts">a handler of any Animal handles Dogs</text>
+</g>
+<text x="410" y="290" text-anchor="middle" class="ts">An arrow A → B means "an A may be used wherever a B is expected".</text>
+</svg>
+</div>
+
 mypy reports exactly the two unsound lines:
 
 ```text

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="797.356875pt" height="310.502859pt" viewBox="0 0 797.356875 310.502859" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-20T08:17:40.174633</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 310.502859 
+L 797.356875 310.502859 
+L 797.356875 0 
+L 0 0 
+z
+" style="fill: #0d1117"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 27.676875 244.11525 
+L 697.276875 244.11525 
+L 697.276875 44.53125 
+L 27.676875 44.53125 
+z
+" style="fill: #0d1117"/>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="xtick_1">
+     <g id="line2d_1">
+      <defs>
+       <path id="mcfefb950f0" d="M 0 0 
+L 0 3.5 
+" style="stroke: #c9d1d9; stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#mcfefb950f0" x="27.676875" y="244.11525" style="fill: #c9d1d9; stroke: #c9d1d9; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_1">
+      <text style="font-size: 12px; font-family: 'Inter', 'DejaVu Sans'; text-anchor: middle; fill: #c9d1d9" x="27.676875" y="262.74025" transform="rotate(-0 27.676875 262.74025)">0%</text>
+     </g>
+    </g>
+    <g id="xtick_2">
+     <g id="line2d_2">
+      <g>
+       <use xlink:href="#mcfefb950f0" x="195.076875" y="244.11525" style="fill: #c9d1d9; stroke: #c9d1d9; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_2">
+      <text style="font-size: 12px; font-family: 'Inter', 'DejaVu Sans'; text-anchor: middle; fill: #c9d1d9" x="195.076875" y="262.74025" transform="rotate(-0 195.076875 262.74025)">25%</text>
+     </g>
+    </g>
+    <g id="xtick_3">
+     <g id="line2d_3">
+      <g>
+       <use xlink:href="#mcfefb950f0" x="362.476875" y="244.11525" style="fill: #c9d1d9; stroke: #c9d1d9; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_3">
+      <text style="font-size: 12px; font-family: 'Inter', 'DejaVu Sans'; text-anchor: middle; fill: #c9d1d9" x="362.476875" y="262.74025" transform="rotate(-0 362.476875 262.74025)">50%</text>
+     </g>
+    </g>
+    <g id="xtick_4">
+     <g id="line2d_4">
+      <g>
+       <use xlink:href="#mcfefb950f0" x="529.876875" y="244.11525" style="fill: #c9d1d9; stroke: #c9d1d9; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_4">
+      <text style="font-size: 12px; font-family: 'Inter', 'DejaVu Sans'; text-anchor: middle; fill: #c9d1d9" x="529.876875" y="262.74025" transform="rotate(-0 529.876875 262.74025)">75%</text>
+     </g>
+    </g>
+    <g id="xtick_5">
+     <g id="line2d_5">
+      <g>
+       <use xlink:href="#mcfefb950f0" x="697.276875" y="244.11525" style="fill: #c9d1d9; stroke: #c9d1d9; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_5">
+      <text style="font-size: 12px; font-family: 'Inter', 'DejaVu Sans'; text-anchor: middle; fill: #c9d1d9" x="697.276875" y="262.74025" transform="rotate(-0 697.276875 262.74025)">100%</text>
+     </g>
+    </g>
+    <g id="text_6">
+     <text style="font-size: 13px; font-family: 'Inter', 'DejaVu Sans'; text-anchor: middle; fill: #c9d1d9" x="362.476875" y="282.228531" transform="rotate(-0 362.476875 282.228531)">share of pipeline() wall time (width) · call depth grows upward</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2"/>
+   <g id="patch_3">
+    <path d="M 27.676875 244.11525 
+L 697.276875 244.11525 
+L 697.276875 184.883869 
+L 27.676875 184.883869 
+z
+" clip-path="url(#p03b0b72fc6)" style="fill: #c4b5fd; opacity: 0.9; stroke: #c4b5fd; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 27.676875 179.733315 
+L 490.621012 179.733315 
+L 490.621012 120.501934 
+L 27.676875 120.501934 
+z
+" clip-path="url(#p03b0b72fc6)" style="fill: #fca5a5; opacity: 0.9; stroke: #fca5a5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 490.621012 179.733315 
+L 665.346579 179.733315 
+L 665.346579 120.501934 
+L 490.621012 120.501934 
+z
+" clip-path="url(#p03b0b72fc6)" style="fill: #67e8f9; opacity: 0.9; stroke: #67e8f9; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 27.676875 115.351379 
+L 34.137239 115.351379 
+L 34.137239 56.119998 
+L 27.676875 56.119998 
+z
+" clip-path="url(#p03b0b72fc6)" style="fill: #fde047; opacity: 0.9; stroke: #fde047; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 490.621012 115.351379 
+L 538.297526 115.351379 
+L 538.297526 56.119998 
+L 490.621012 56.119998 
+z
+" clip-path="url(#p03b0b72fc6)" style="fill: #fdba74; opacity: 0.9; stroke: #fdba74; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 27.676875 244.11525 
+L 697.276875 244.11525 
+" style="fill: none; stroke: #30363d; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_7">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'Inter', 'DejaVu Sans'; text-anchor: start; fill: #0d1117" x="31.024875" y="218.864794" transform="rotate(-0 31.024875 218.864794)">pipeline  100%</text>
+   </g>
+   <g id="text_8">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'Inter', 'DejaVu Sans'; text-anchor: start; fill: #0d1117" x="31.024875" y="154.482859" transform="rotate(-0 31.024875 154.482859)">featurize  69%</text>
+   </g>
+   <g id="text_9">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'Inter', 'DejaVu Sans'; text-anchor: start; fill: #0d1117" x="493.969012" y="154.482859" transform="rotate(-0 493.969012 154.482859)">parse  26%</text>
+   </g>
+   <g id="text_10">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'Inter', 'DejaVu Sans'; text-anchor: start; fill: #0d1117" x="493.969012" y="90.100923" transform="rotate(-0 493.969012 90.100923)">split  7%</text>
+   </g>
+   <g id="text_11">
+    <text style="font-weight: 700; font-size: 15px; font-family: 'Inter', 'DejaVu Sans'; text-anchor: start; fill: #f0f3f6" x="27.676875" y="32.53125" transform="rotate(-0 27.676875 32.53125)">Icicle graph: featurize's list-membership loop takes 69% of pipeline()</text>
+   </g>
+  </g>
+  <g id="text_12">
+   <text style="font-size: 10px; font-family: 'Inter', 'DejaVu Sans'; text-anchor: end; fill: #9da7b3" x="779.356875" y="290.09075" transform="rotate(-0 779.356875 290.09075)">deterministic stack profile via sys.setprofile, CPython 3.13 (profiler overhead included)</text>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p03b0b72fc6">
+   <rect x="27.676875" y="44.53125" width="669.6" height="199.584"/>
+  </clipPath>
+ </defs>
+</svg>

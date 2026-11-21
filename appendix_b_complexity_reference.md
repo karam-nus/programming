@@ -39,7 +39,7 @@ The cost of every built-in operation used in the book, for CPython. Average-case
 | insertion | $\Theta(1)$ amortized | $\Theta(n)$ | resize when used > 2/3 of table size |
 | iteration (`keys`, `values`, `items`) | $\Theta(n)$ | | insertion order guaranteed (3.7+) |
 | `d.copy()`, `dict(d)` | $\Theta(n)$ | | compacts after deletions |
-| `d1 \| d2`, `d1.update(d2)` | $\Theta(n + k)$ / $\Theta(k)$ | | |
+| <code>d1 &#124; d2</code>, `d1.update(d2)` | $\Theta(n + k)$ / $\Theta(k)$ | | |
 | `d.popitem()` | $\Theta(1)$ amortized | | LIFO order |
 | memory after deletions | — | — | never shrinks on `del` |
 
@@ -49,7 +49,7 @@ The cost of every built-in operation used in the book, for CPython. Average-case
 |-----------|:---:|:---:|------|
 | `v in s`, `s.add(v)`, `s.discard(v)` | $\Theta(1)$ | $\Theta(n)$ | ~19 ns membership |
 | `s & t` | $\Theta(\min(n, k))$ | $\Theta(nk)$ | iterates the smaller operand |
-| `s \| t` | $\Theta(n + k)$ | | |
+| <code>s &#124; t</code> | $\Theta(n + k)$ | | |
 | `s - t` | $\Theta(n)$ | | |
 | `s ^ t` | $\Theta(n + k)$ | | |
 | `s <= t` (subset) | $\Theta(n)$ | | |
@@ -106,6 +106,8 @@ The cost of every built-in operation used in the book, for CPython. Average-case
 | `property` read | 21.4 | 1.9× |
 | `__getattr__` fallback | 40.5 | 3.6× |
 | pure-Python data descriptor | 62.9 | 5.6× |
+| entering a `try` block (nothing raised) | ≈ 0 extra | — |
+| raising + catching `KeyError` | +100 over a lookup | ≈ 3.5× a guarded lookup |
 | `ctypes` call to a C function | ~250 overhead | — |
 
 ---

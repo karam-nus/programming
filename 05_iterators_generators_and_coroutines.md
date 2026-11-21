@@ -10,7 +10,7 @@ title: "Chapter 5 — Iterators, Generators & Coroutines"
 
 ## Overview
 
-The `for` statement is sugar for a two-method protocol. Generators implement that protocol by suspending a frame mid-execution and resuming it later; `send`, `throw` and `yield from` turn the same machinery into a two-way channel; and native coroutines (`async def`) are that machinery with a different type tag and an event loop driving it. This chapter goes from the protocol to the frame to the event loop, then covers generator pipelines and generator-based context managers. It assumes frames from [Chapter 1](./01_from_source_to_bytecode.md).
+The `for` statement is sugar for a two-method protocol whose end is signalled by an exception. Generators implement that protocol by suspending a frame mid-execution and resuming it later; `send`, `throw` and `yield from` turn the same machinery into a two-way channel; and native coroutines (`async def`) are that machinery with a different type tag and an event loop driving it. This chapter goes from the protocol to the frame to the event loop, then covers generator pipelines, exceptions and their cost model, and generator-based context managers. It assumes frames from [Chapter 1](./01_from_source_to_bytecode.md).
 
 <div class="diagram">
 <div class="diagram-title">One mechanism, four surfaces</div>
@@ -288,6 +288,152 @@ print([(k, len(list(g))) for k, g in itertools.groupby("aaabccdd")])
 
 ---
 
+## Exceptions: Control Flow With a Cost Model
+
+| | |
+|---|---|
+| **Mechanism** | `raise` unwinds frames until a matching `except`; `finally` and `__exit__` run on the way out |
+| **Defined in** | Language Reference §7.8 (`raise`), §8.4 (`try`); PEP 3134 (chaining), PEP 654 (groups), PEP 678 (notes) |
+| **Since** | Zero-cost `try` (exception tables) 3.11; `ExceptionGroup`, `except*`, `add_note` 3.11 |
+| **Hooks into** | The code object's exception table (`co_exceptiontable`), consulted only when something is raised |
+| **Typical use** | Errors, early exit from deep recursion, `StopIteration` ending every `for` loop |
+| **Cost** | Entering a `try` block: free. Raising and catching: ~3.5× a dict lookup (measured below) |
+| **Prefer instead** | `dict.get`, `getattr(obj, name, default)`, `next(it, default)` for expected misses |
+| **Failure modes** | Bare `except:` swallowing `KeyboardInterrupt`; `return` inside `finally` discarding an exception; losing the original traceback |
+
+An exception is a second exit path out of every expression. The `for` loop machinery above already depends on it: `StopIteration` is how iterators say "done", and generators turn `return` into one.
+
+### The four clauses, in execution order
+
+```python
+def attempt(x):
+    log = []
+    try:
+        log.append("try")
+        result = 10 / x
+    except ZeroDivisionError as e:
+        log.append(f"except: {e}")
+        result = None
+    else:
+        log.append("else (no exception)")      # runs only if try finished normally
+    finally:
+        log.append("finally")                  # runs no matter how we leave
+    return result, log
+
+print(attempt(2))
+print(attempt(0))
+```
+
+```text
+(5.0, ['try', 'else (no exception)', 'finally'])
+(None, ['try', 'except: division by zero', 'finally'])
+```
+
+`else` exists so the `try` block can be kept minimal: put only the line that may raise *the exception you handle* inside `try`, and the follow-up work in `else` — otherwise an unrelated `ZeroDivisionError` from the follow-up would be caught by mistake.
+
+### Zero-cost `try`, expensive `raise`
+
+Since 3.11, entering a `try` block emits **no instructions**. The compiler records protected ranges in an exception table on the code object, and the interpreter consults it only when an exception is actually raised (`Python/compile.c`, `InternalDocs/exception_handling.md`):
+
+<div class="term"><div class="term-bar">dis.dis(f) · CPython 3.13 — note: no SETUP instruction before the protected range</div><pre><span class="t-dim">  20   L1:</span>  LOAD_CONST               1 (1)
+            STORE_FAST               0 (x)
+<span class="t-dim">       L2:</span>  RETURN_CONST             0 (None)
+<span class="t-dim">  --   L3:</span>  PUSH_EXC_INFO
+            LOAD_GLOBAL              0 (KeyError)
+            CHECK_EXC_MATCH
+            ...
+<span class="t-hl">ExceptionTable:
+  L1 to L2 -&gt; L3 [0]</span></pre></div>
+
+Measured (`bench/exceptions.py`, CPython 3.13, Xeon @ 2.1 GHz, median of 7; each row includes a function call):
+
+| Pattern | ns/op | vs plain | Choose this when |
+|---------|:---:|:---:|------------------|
+| **`d[k]`, no `try`** | 39.9 | 1.0× | the key is always present |
+| **`try: d[k]`, key present** | 41.2 | 1.0× | misses are rare (EAFP) — the `try` itself is free |
+| **`try: d[k]`, key missing → `KeyError` caught** | 140.4 | 3.5× | never as the common path |
+| **`if k in d`, key missing (LBYL)** | 43.0 | 1.1× | misses are common and there is no race |
+| **`d.get(k, -1)`, key missing** | 45.6 | 1.1× | a default value expresses the intent |
+
+The rule that follows: **EAFP ("easier to ask forgiveness") is the right default when failure is rare; when failure is the common path, test first or use a defaulting API.** Raising builds a traceback object linking every unwound frame, which is where the cost goes. LBYL has a second weakness beyond style: between the check and the use, another thread (or process, for files) can change the answer — `if os.path.exists(p): open(p)` is a race, `try: open(p)` is not.
+
+### Chaining: never lose the original error
+
+Raising inside an `except` block chains automatically (`__context__`); `raise New(...) from err` states the cause explicitly (`__cause__`), and `from None` suppresses the context when the low-level detail is noise. Since 3.11, `add_note` attaches context without changing the exception type:
+
+```python
+class ConfigError(Exception):
+    pass
+
+def load(cfg, key):
+    try:
+        return cfg[key]
+    except KeyError as err:
+        raise ConfigError(f"missing required setting {key!r}") from err
+
+try:
+    load({"lr": 0.1}, "epochs")
+except ConfigError as e:
+    e.add_note("hint: set epochs in train.yaml")
+    print(type(e).__name__, "-", e)
+    print("caused by:", repr(e.__cause__))
+    print("notes:", e.__notes__)
+```
+
+```text
+ConfigError - missing required setting 'epochs'
+caused by: KeyError('epochs')
+notes: ['hint: set epochs in train.yaml']
+```
+
+### `finally` always wins — including over `return`
+
+```python
+def swallow():
+    try:
+        raise RuntimeError("the real problem")
+    finally:
+        return "finally's value"            # discards the in-flight exception
+
+print(swallow())
+```
+
+```text
+finally's value
+```
+
+A `return`, `break` or `continue` that leaves a `finally` block silently drops whatever exception was propagating. It is almost always a bug, so PEP 765 makes it a `SyntaxWarning` from 3.14. Keep `finally` for cleanup only — or better, use `with` (next section), which is `try/finally` packaged so you cannot get it wrong.
+
+### Many failures at once: `ExceptionGroup` and `except*` (3.11+)
+
+Concurrent code can fail in several places simultaneously; `asyncio.TaskGroup` ([Chapter 8](./08_concurrency_and_parallelism.md)) raises all of them together as an `ExceptionGroup`. `except*` handles each type in the group and re-raises whatever is left:
+
+```python
+def run_all():
+    raise ExceptionGroup("2 shards failed", [ValueError("bad row 17"), OSError("disk full"), ValueError("bad row 90")])
+
+try:
+    run_all()
+except* ValueError as group:
+    print("data errors:", [str(e) for e in group.exceptions])
+except* OSError as group:
+    print("io errors:", [str(e) for e in group.exceptions])
+```
+
+```text
+data errors: ['bad row 17', 'bad row 90']
+io errors: ['disk full']
+```
+
+| Do | Don't |
+|----|-------|
+| Catch the narrowest exception type you can handle | `except:` or `except BaseException:` — also catches `KeyboardInterrupt` and `SystemExit` |
+| Keep the `try` body to the line that raises | Wrap a whole function in `try` |
+| `raise ... from err` when translating errors | `raise NewError(str(err))` — the original traceback is lost |
+| Let unexpected errors propagate | Log-and-continue in library code |
+
+---
+
 ## Context Managers From Generators
 
 The `with` protocol is `__enter__` / `__exit__(exc_type, exc, tb)`. `contextlib.contextmanager` turns a generator with exactly one `yield` into a context manager: code before the `yield` is `__enter__`, the yielded value is bound by `as`, and code after is `__exit__`. An exception in the `with` body is **thrown into the generator** at the `yield` — the `throw` mechanism above — so `try/finally` around the `yield` is mandatory for cleanup.
@@ -381,6 +527,10 @@ print(run(worker("a", [3, 3]), worker("b", [1, 1, 1]), worker("c", [5])))
 
 </details>
 
+The same loop, animated — ready queue, sleeping heap and a timeline. Each bright tick is a `send(None)` into one task:
+
+<div class="lab" data-lab="eventloop"></div>
+
 `asyncio` adds real I/O readiness via `selectors`, cancellation (throwing `CancelledError` into the coroutine), structured concurrency (`asyncio.TaskGroup`, 3.11+), and timeouts (`asyncio.timeout`, 3.11+). The essential property is visible in the toy: **switches happen only at `await`/`yield`**. A coroutine that runs a CPU-bound loop without awaiting blocks every other task — the event loop is cooperative, not preemptive. When to choose asyncio over threads or processes is a [Chapter 8](./08_concurrency_and_parallelism.md) decision.
 
 ---
@@ -391,6 +541,7 @@ print(run(worker("a", [3, 3]), worker("b", [1, 1, 1]), worker("c", [5])))
 - Calling a generator function runs nothing; the body runs lazily between `yield`s on a frame that survives suspension — validate arguments eagerly in a wrapper.
 - `yield` is an expression: `send`, `throw` and `close` make generators two-way, and `yield from` forwards all three and returns the subgenerator's result.
 - Generator pipelines process streams in constant memory; `itertools` is the C-implemented vocabulary of pipeline stages.
+- Entering `try` is free since 3.11 (exception tables); raising costs ~3.5× a dict lookup, so EAFP fits rare failures and `get`/`in` fit common ones. Chain with `raise … from`, never `return` from `finally`.
 - `@contextmanager` splits a generator at its `yield`; exceptions from the `with` body are thrown in at that point, so cleanup belongs in `finally`.
 - Coroutines are the same suspension machinery driven by an event loop; switches happen only at `await`, so CPU-bound work in a coroutine blocks the whole loop.
 
@@ -404,6 +555,9 @@ print(run(worker("a", [3, 3]), worker("b", [1, 1, 1]), worker("c", [5])))
 | PEP 380 — Syntax for Delegating to a Subgenerator | Ewing, 2009 | peps.python.org/pep-0380 | `yield from` semantics and return values |
 | PEP 479 — Change StopIteration handling inside generators | Angelico, van Rossum, 2014 | peps.python.org/pep-0479 | `StopIteration` → `RuntimeError` |
 | PEP 492 — Coroutines with async and await | Selivanov, 2015 | peps.python.org/pep-0492 | Native coroutines, `__await__` |
+| PEP 3134, PEP 654, PEP 678, PEP 765 | Yee 2005; Katriel et al. 2021; Niederhauser 2022; Katriel 2024 | peps.python.org | Exception chaining; `ExceptionGroup`/`except*`; `add_note`; `finally` control-flow warning (3.14) |
+| `InternalDocs/exception_handling.md` | CPython | github.com/python/cpython | Zero-cost exception tables (3.11) |
+| `bench/exceptions.py` | this repo | [bench/RESULTS.md](./bench/RESULTS.md) | try/raise/LBYL timings |
 | `itertools`, `contextlib`, `asyncio` docs | Python docs | docs.python.org/3/library/ | `batched`, `pairwise`, `TaskGroup`, `timeout` |
 | `Objects/genobject.c`, `Lib/asyncio/base_events.py`, `Lib/asyncio/tasks.py` | CPython | github.com/python/cpython | Generator/coroutine objects, the loop and `Task.__step` |
 

@@ -85,3 +85,27 @@ Re-run any script with `python3 bench/<name>.py` from the repo root's `bench/` d
 | ctypes libm.cos, one call per element | 299.5 | 5.98x |
 | math.cos, one call per element | 50.1 | 1.00x |
 | numpy.cos on the whole array (one call) | 6.1 | 0.12x |
+
+## front_insert.py
+
+> CPython 3.13.18, Linux x86_64, x86_64; ns per insert+pop at the front; median of 5
+
+| n | list.insert(0)+pop(0) | deque.appendleft+popleft |
+|---:|---:|---:|
+| 100 | 133 | 94 |
+| 1000 | 439 | 86 |
+| 10000 | 4400 | 85 |
+| 100000 | 40164 | 54 |
+| 1000000 | 608707 | 54 |
+
+## exceptions.py
+
+> CPython 3.13.18, Linux x86_64, x86_64; median of 7 repeats
+
+| operation                                    | ns/op | ratio |
+|----------------------------------------------|------:|------:|
+| d[k] (no try)                                |  39.9 |   1.0x |
+| try: d[k] — key present (nothing raised)     |  41.2 |   1.0x |
+| try: d[k] — key missing (KeyError raised)    | 140.4 |   3.5x |
+| if k in d — key missing (LBYL)               |  43.0 |   1.1x |
+| d.get(k, -1) — key missing                   |  45.6 |   1.1x |

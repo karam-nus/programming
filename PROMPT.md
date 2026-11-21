@@ -266,47 +266,67 @@ Rules:
 - Headings are specific: `### Why late binding bites in loops`, not `### More details`.
 - Keep `##`/`###` headings under ~60 characters; they feed the right-hand TOC.
 
-### 4.2 Allowed HTML components
+### 4.2 Visual vocabulary
 
-The stylesheet defines a fixed vocabulary. **Do not invent class names.** The permitted set:
+Every chapter should be *seen* as well as read. Pick a visual by the **question the picture answers**, not
+for variety: "what happens, step by step?" → a lab; "how is it laid out?" → an inline-SVG figure;
+"how much does it cost?" → a chart or a receipt; "what did the tool print?" → a terminal. The Overview
+of each chapter carries one picture; a chapter should rarely need more than four.
 
-**Containers:** `.diagram`, `.diagram-title`, `.diagram-center`
+**Legibility rules (non-negotiable).** Diagram text is at least 14px at desktop width (sub-labels 13px),
+near-white on a solid dark fill; colour goes in borders, stripes and headings using the bright tint
+tokens (`--c-green … --c-red`), never as body text on a tint of the same colour. Never upper-case code.
+On phones, drawings keep a 600px minimum width and scroll inside their frame rather than shrinking.
 
-**Card grids:** `.diagram-grid` + `.cols-2|3|4`; children `.diagram-card` optionally
-`.accent .green .teal .purple .orange .cyan .pink .yellow`; inside: `.card-icon`, `.card-title`, `.card-desc`
+**Interactive labs** — `<div class="lab" data-lab="NAME"></div>`, implemented in `assets/js/pg-*.js`
+(vanilla JS, no dependencies). Each lab re-implements the chapter's algorithm, so its numbers must match
+the verified snippets. Some take a start state: `data-problem` (dptable), `data-alg` (graph).
 
-**Flows:** `.flow` (vertical) / `.flow-h` (horizontal), children `.flow-node` colored
-`.accent .green .blue .teal .purple .orange .yellow .pink .red .cyan`, sized `.narrow .wide .extra-wide`,
-separated by `.flow-arrow` (optionally `.accent`); `.flow-label`; `<small>` for sub-labels
+| Lab | Shows | Home |
+|-----|-------|:---:|
+| `pipeline` | one line through tokens → AST → symtable → bytecode → run | 0 |
+| `bytecode` | stack machine stepping `scale_sum` (3.13 listing and executed path, verified by opcode trace) | 1 |
+| `names` | names → objects, refcounts: aliasing, mutable defaults, `[[0]*3]*3`, cycles | 2 |
+| `lookup`, `c3` | the five attribute-lookup steps; C3 merge with rejected heads | 4 |
+| `eventloop` | toy loop: ready queue, sleeping heap, timeline | 5 |
+| `gil`, `race` | thread/process timelines (a model, labelled as such); lost-update interleavings | 8 |
+| `growth`, `append` | complexity curves vs a 1-second budget; `list_resize` over-allocation | 13 |
+| `bsearch` | binary search invariant regions | 14 |
+| `fibtree`, `dptable` | recursion tree with/without cache; DP table fill with dependencies and reconstruction | 15–16 |
+| `intervals` | four greedy rules on one input | 17 |
+| `graph` | BFS / DFS / Dijkstra / Kahn frontiers | 18 |
+| `hashtable`, `heap` | CPython dict indices + entries with the real probe sequence; heap sift | 19 |
+| `bits` | two's-complement identities; IEEE-754 fields | 20 |
 
-**Stacks:** `.layer-stack` > `.layer` (same colors). Use for lookup chains (MRO, LEGB).
+**Generated charts** — `tools/make_figures.py` writes SVGs to `assets/images/` from `bench/RESULTS.md`
+tables and exact computations; embed with `<div class="fig"><img src="assets/images/X.svg" alt="…"><div class="figcap">…</div></div>`.
+Never hand-edit a generated SVG and never type a plotted number by hand. Every `alt` states the data.
 
-**Cycles:** `.cycle` > `.cycle-step` (`.accent .green .purple .orange`) and `.cycle-arrow`. Use for event loops.
+**Genres** (all in `assets/css/style.css`):
 
-**Compare:** `.compare` > `.compare-side.left|right` > `.compare-title` + `<ul>`
+| Genre | Markup root | Use it for |
+|-------|-------------|-----------|
+| Inline SVG figure | `.svgfig` > `<svg>` using classes `t ts tm th box ln ln.hot ln.warn` | structures, pointers, before/after, maps |
+| Call stack | `.callstack` > `.frame` (`.accent .green .purple .orange .cyan`) > `.frame-name` + `.frame-body` | frames, recursion, generators |
+| Terminal | `.term` > `.term-bar` + `<pre>` with `.t-prompt .t-dim .t-ok .t-err .t-warn .t-hl` | real tool output, pasted verbatim |
+| Callout | `.callout` + one of `.note` `.warn` `.myth` `.ponder` `.fix`, containing `.callout-title` + `<p>` | traps, myths, open questions |
+| Onion | `.onion` > `.ring.c1..c4` > `.ring-label` + `.ring-note` … `.core` | wrappers: decorators, context managers |
+| Conveyor | `.conveyor` > `.conveyor-title` + `.conveyor-belt` > `.station.<colour>` > `.st-num .st-name .st-desc` | ordered pipelines (class creation) |
+| Ladder | `.ladder` > `.ladder-title` + `.ladder-legend` + `.rung` (`.here`) with `.rung-meter` (`--p`) | escalating options (metaprogramming rungs) |
+| Steps | `.steps` > `.step` > `<b>` + `<span>` | numbered procedures |
+| Receipt | `.receipts` > `.receipt` > `.r-head .r-sub .r-rule .r-line(.muted .hl) .r-total .r-foot` | cost and memory accounting |
+| Versus | `.versus` > `.fighter(.p2)` + `.vs`, with `.f-name .f-sub .stat > i (--v) .f-win` | two ideas or designs head to head |
+| Periodic table | `.ptable` > `a.el.fam-*` > `.el-num .el-sym .el-name`; `.ptable-legend` | a catalogue of concepts linking to chapters |
+| Comic | `.comic` > `.panel(.dark)` > `.cap .who .bubble(.r .think) .sfx` | a dialogue with the compiler or interpreter |
+| Field guide | `.fieldguide` > `.species.c-*` > `.sp-name .sp-latin .sp-shape(svg) .sp-marks` | recognising problem shapes |
+| Bit layout | `.bitfield` > `.bf-seg.sign/.exponent/.mantissa/…`; `.bitfield-label` | integer and float layouts |
+| Classic | `.diagram`, `.flow`, `.flow-h`, `.diagram-grid`, `.layer-stack`, `.cycle`, `.compare`, `.timeline` | simple boxes-and-arrows — legible, but not the default |
+| Collapsible code | `<details class="code-fold">` — §4.4 | listings over 25 lines |
 
-**Timelines:** `.timeline` > `.timeline-item` > `.timeline-year`, `.timeline-title`, `.timeline-desc`
-
-**Bit layouts:** `.bitfield` > `.bf-seg` typed `.sign .exponent .mantissa .scale .zero .payload .pad`,
-`<small>` for bit counts; `.bitfield-label` underneath. Use for integer/float/flag layouts.
-
-**Call stacks (this repo only):** `.callstack` > `.frame` (`.accent .green .purple .orange .cyan`)
-> `.frame-name` + `.frame-body`; `.callstack-label` after. Frames are listed **outermost first** in
-the HTML; CSS renders the innermost on top. Use for recursion, closures, generators.
-
-```html
-<div class="callstack">
-  <div class="frame"><div class="frame-name">&lt;module&gt;</div><div class="frame-body">fib(3)</div></div>
-  <div class="frame accent"><div class="frame-name">fib(n=3)</div><div class="frame-body">waiting on fib(2)</div></div>
-</div>
-<div class="callstack-label">Innermost frame on top</div>
-```
-
-**Collapsible code:** `<details class="code-fold">` — §4.4.
-
-Blank lines inside HTML blocks break kramdown. Keep each component contiguous. Escape `<` as
-`&lt;` inside HTML text. Markdown (backticks, emphasis) is not rendered inside HTML blocks — use
-`<code>` and `<em>`.
+`tools/check_site.py` fails on any class not defined in the stylesheet, any unknown lab, any unresolved
+link or image, and any blank line inside an HTML block. Blank lines inside HTML blocks break kramdown;
+escape `<` as `&lt;`; Markdown is not rendered inside HTML blocks — use `<code>` and `<em>`; links
+inside HTML use the built page name (`09_decorators.html`), not the `.md` source.
 
 **Liquid.** GitHub Pages runs Jekyll 3.10, which evaluates Liquid tags everywhere, including inside
 code fences. A page whose code contains a double opening brace or a brace-percent pair must have
@@ -439,13 +459,14 @@ and `NotImplemented`, `__hash__`/`__eq__` contract.
 
 **`05_iterators_generators_and_coroutines.md`** — iterator protocol, `for` desugared, generators
 as suspended frames, `send`/`throw`/`close`, `yield from` delegation, generator pipelines,
-`itertools` as a vocabulary, native coroutines and `await` as the same machinery, context
-managers built from generators.
+`itertools` as a vocabulary, exceptions (zero-cost `try`, cost of raising, EAFP vs LBYL, chaining,
+`ExceptionGroup`), native coroutines and `await` as the same machinery, context managers built from
+generators.
 
 ### Part II — Paradigms
 
 **`06_functional_programming.md`** — first-class functions, purity, higher-order functions,
-`functools` (`partial`, `reduce`, `cache`, `singledispatch`), immutability in a mutable language,
+`functools` (`partial`, `reduce`, `cache`, `singledispatch`), structural pattern matching, immutability in a mutable language,
 recursion without TCO, comprehensions vs `map`/`filter`, where FP shines in ML (JAX's pure
 functions, transforms as composition).
 
@@ -473,7 +494,7 @@ validated-field framework, `functools.cached_property` and its lock history, slo
 descriptors.
 
 **`11_metaclasses_and_class_creation.md`** — the class statement desugared (`__prepare__`, body
-exec, `type(name, bases, ns)`, `__init_subclass__`, `__set_name__`), `type` as the default
+exec, `type(name, bases, ns)`, `__init_subclass__`, `__set_name__`), `__new__` vs `__init__`, `type` as the default
 metaclass, when a metaclass is genuinely needed (namespace control, class-level operators,
 `ABCMeta`, enum), metaclass conflicts, registries via `__init_subclass__`, how `dataclasses`
 generates code with `exec`.
@@ -488,12 +509,13 @@ lazy imports (PEP 810, 3.15).
 
 **`13_complexity_and_cost_models.md`** — asymptotics done properly, amortized analysis (list
 over-allocation derived), the Python constant-factor cost model measured, "an algorithm in
-Python vs the right builtin", space complexity including the call stack.
+Python vs the right builtin", space complexity including the call stack, and NP-hardness — how to
+recognise it and what to do instead of searching for a polynomial algorithm.
 
 **`14_recursion_and_divide_and_conquer.md`** — recursion as induction, the call stack and
 `sys.setrecursionlimit`, recurrences and the master theorem with proof sketch, merge sort,
-quickselect, binary search and its invariant, converting recursion to iteration with an explicit
-stack.
+quickselect, binary search and its invariant, backtracking with pruning, converting recursion to
+iteration with an explicit stack.
 
 **`15_dynamic_programming_foundations.md`** — optimal substructure and overlapping subproblems;
 the DP recipe (§3.3); memoization (`functools.cache`) vs tabulation; Fibonacci → climbing stairs
@@ -515,8 +537,8 @@ shortest paths as DP on a DAG.
 
 **`19_data_structure_internals.md`** — CPython `list` (dynamic array), `dict` (compact
 open-addressing with insertion order), `set`, `deque` (block list), `heapq` (array heap),
-`bisect`; their costs; tries, monotonic stacks/queues, prefix sums and sparse tables as
-technique-level structures.
+`bisect`; their costs; tries, monotonic stacks/queues, prefix sums and two pointers / sliding
+windows as technique-level structures.
 
 **`20_bit_manipulation.md`** — two's complement and Python's arbitrary-precision ints, masks and
 shifts, `int.bit_count`, lowbit tricks, subset enumeration, bitsets for DP, IEEE-754 layout via
@@ -563,7 +585,8 @@ new material — an index into the book.
 - [ ] Every snippet was run; every shown output came from the run; version stated where it matters
 - [ ] Every timing traces to `bench/` or a reference row, with conditions
 - [ ] Snippets > 25 lines are folded with a length in the summary
-- [ ] No HTML class outside §4.2; no blank lines inside HTML blocks
+- [ ] A visual that answers the chapter's central question (§4.2), legible at desktop and phone width
+- [ ] `python3 tools/check_site.py` passes (classes, labs, links, images, HTML blocks)
 - [ ] Comparison tables have a "Choose this when" column
 - [ ] §5 questions answered
 - [ ] `## Key Takeaways` are claims, not summaries
@@ -583,5 +606,5 @@ new material — an index into the book.
 4. Part IV (13–20), with Appendix C filled as DP problems are written.
 5. Part V (21–22), then Part VI (23).
 6. Chapter 00 and remaining appendices last.
-7. Final pass: run every snippet (`python3 tools/check_snippets.py`), link audit, appendix
-   reconciliation, README TOC.
+7. Final pass: `python3 tools/check_snippets.py --strict`, `python3 tools/make_figures.py`,
+   `python3 tools/check_site.py`, a local Jekyll build, appendix reconciliation, README TOC.

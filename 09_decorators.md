@@ -12,16 +12,15 @@ title: "Chapter 9 — Decorators"
 
 Metaprogramming is code that inspects, generates or modifies code. Python offers it at six levels of power and danger; this chapter lays out that ladder and then covers the lowest and most-used rung, the decorator, in full: the desugaring, `functools.wraps`, decorator factories, stateful decorators, decorating methods and classes, and typing decorators so that checkers still understand the decorated function. It assumes closures ([Chapter 3](./03_scope_closures_and_binding.md)) and function objects ([Chapter 1](./01_from_source_to_bytecode.md)).
 
-<div class="diagram">
-<div class="diagram-title">The metaprogramming ladder — use the lowest rung that solves the problem</div>
-<div class="layer-stack">
-  <div class="layer green">1. Decorator — wrap or register a function/class after it is built (this chapter)</div>
-  <div class="layer teal">2. Descriptor — intercept attribute access on one attribute (Ch 10)</div>
-  <div class="layer cyan">3. __init_subclass__ / class decorator — act on every subclass at creation (Ch 11)</div>
-  <div class="layer purple">4. Metaclass — control how the class object itself is created and behaves (Ch 11)</div>
-  <div class="layer orange">5. AST / code generation — rewrite or generate source (Ch 12)</div>
-  <div class="layer red">6. Import hooks / frame-evaluation hooks — change how modules load or how code runs (Ch 12)</div>
-</div>
+<div class="ladder">
+<div class="ladder-title">The metaprogramming ladder — use the lowest rung that solves the problem</div>
+<div class="ladder-legend">power &amp; blast radius →</div>
+<div class="rung here"><span class="rung-n">1</span><div><div class="rung-name">Decorator — wrap or register a function/class after it is built</div><div class="rung-desc">this chapter</div></div><div class="rung-meter" style="--p:.18"></div></div>
+<div class="rung"><span class="rung-n">2</span><div><div class="rung-name">Descriptor — intercept access to one attribute</div><div class="rung-desc">Chapter 10</div></div><div class="rung-meter" style="--p:.32"></div></div>
+<div class="rung"><span class="rung-n">3</span><div><div class="rung-name"><code>__init_subclass__</code> / class decorator — act on every subclass at creation</div><div class="rung-desc">Chapter 11</div></div><div class="rung-meter" style="--p:.46"></div></div>
+<div class="rung"><span class="rung-n">4</span><div><div class="rung-name">Metaclass — control how the class object itself is created and behaves</div><div class="rung-desc">Chapter 11</div></div><div class="rung-meter" style="--p:.62"></div></div>
+<div class="rung"><span class="rung-n">5</span><div><div class="rung-name">AST / code generation — rewrite or generate source</div><div class="rung-desc">Chapters 11–12</div></div><div class="rung-meter" style="--p:.8"></div></div>
+<div class="rung"><span class="rung-n">6</span><div><div class="rung-name">Import hooks / frame-evaluation hooks — change how modules load or code runs</div><div class="rung-desc">Chapter 12</div></div><div class="rung-meter" style="--p:.97"></div></div>
 </div>
 
 Each rung up is more powerful, affects more code at a distance, and is harder to debug. Most problems that look like they need a metaclass are solved by `__init_subclass__`; most that look like they need AST rewriting are solved by a decorator. This ladder is the "code is data" thread referenced throughout the book.
@@ -73,6 +72,16 @@ print(hello())     # tag("b")(tag("i")(hello))
 ```text
 <b><i>hi</i></b>
 ```
+
+<div class="onion">
+<div class="ring c1"><span class="ring-label">tag("b") wrapper</span><span class="ring-note">applied 2nd · runs 1st</span>
+<div class="ring c2"><span class="ring-label">tag("i") wrapper</span><span class="ring-note">applied 1st · runs 2nd</span>
+<div class="core">def hello(): return "hi"</div>
+</div>
+</div>
+</div>
+
+A call enters from the outside: `tag("b")`'s wrapper runs first, calls the `tag("i")` wrapper, which calls the original — and results flow back out through the layers in reverse. This is the same shape as nested `with` blocks and as middleware stacks in web frameworks.
 
 A decorator is any callable that takes the object and returns something. It need not return a wrapper; it can return the original function after recording it (**registration**), a different kind of object (a descriptor, a class instance), or even `None` (rarely useful, always confusing).
 

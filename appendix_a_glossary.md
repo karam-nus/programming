@@ -22,6 +22,7 @@ Every technical term used in the book, alphabetically, with one canonical defini
 | **Amortized cost** | Total cost of a sequence of operations divided by its length; bounds the average per operation over any sequence, not over random inputs | [13](./13_complexity_and_cost_models.md) |
 | **`Any`** | The gradual type compatible with every type in both directions; disables checking for that value | [7](./07_types_and_static_typing.md) |
 | **AST** | Abstract syntax tree: the parser's tree representation of source, exposed by the `ast` module | [1](./01_from_source_to_bytecode.md), [12](./12_introspection_ast_and_codegen.md) |
+| **Backtracking** | Depth-first search over partial solutions with choose → explore → un-choose, abandoning partials that violate constraints | [14](./14_recursion_and_divide_and_conquer.md) |
 | **Base case** | A DP or recursion state whose value is known directly, without the transition | [14](./14_recursion_and_divide_and_conquer.md), [15](./15_dynamic_programming_foundations.md) |
 | **Bitmask / bitset** | An integer whose bits represent membership of small integers in a set | [20](./20_bit_manipulation.md) |
 | **Bound method** | The object produced by `function.__get__(obj, type)`; calling it prepends `obj` to the arguments | [10](./10_descriptors.md) |
@@ -47,11 +48,13 @@ Every technical term used in the book, alphabetically, with one canonical defini
 | **Divide and conquer** | Solving a problem by splitting it into disjoint subproblems, solving them recursively, and combining | [14](./14_recursion_and_divide_and_conquer.md) |
 | **DP recipe** | The seven fields specifying every DP in the book: state, transition, base cases, order, answer, complexity, reconstruction | [15](./15_dynamic_programming_foundations.md) |
 | **Dynamic programming** | Solving overlapping subproblems once each and combining stored results, given optimal substructure | [15](./15_dynamic_programming_foundations.md) |
+| **EAFP / LBYL** | "Easier to ask forgiveness" (try, catch the failure) vs "look before you leap" (test first); EAFP for rare failures, LBYL or defaulting APIs for common ones | [5](./05_iterators_generators_and_coroutines.md) |
 | **Event loop** | The scheduler that runs ready coroutine steps and waits on I/O and timers | [5](./05_iterators_generators_and_coroutines.md), [8](./08_concurrency_and_parallelism.md) |
+| **Exception table** | Per-code-object table of protected ranges (3.11+), consulted only when an exception is raised; makes entering `try` free | [5](./05_iterators_generators_and_coroutines.md) |
 | **Exchange argument** | A proof that some optimal solution contains the greedy choice, by swapping it into an arbitrary optimal solution | [17](./17_greedy_algorithms.md) |
 | **Frame** | The runtime record of one function call: instruction pointer, local slots, value stack, link to the caller | [1](./01_from_source_to_bytecode.md) |
-| **Free variable** | A name used in a function but bound in an enclosing function scope | [3](./03_scope_closures_and_binding.md) |
 | **Free-threaded build** | A CPython build (`python3.13t`/`3.14t`) without the GIL | [8](./08_concurrency_and_parallelism.md) |
+| **Free variable** | A name used in a function but bound in an enclosing function scope | [3](./03_scope_closures_and_binding.md) |
 | **Function object** | The object created when a `def` executes: a code object bound to globals, defaults and a closure | [1](./01_from_source_to_bytecode.md) |
 | **Generator** | An iterator produced by calling a function containing `yield`; wraps a suspended frame | [5](./05_iterators_generators_and_coroutines.md) |
 | **GIL** | Global Interpreter Lock: a per-interpreter mutex required to execute Python bytecode in the default build | [8](./08_concurrency_and_parallelism.md) |
@@ -76,6 +79,7 @@ Every technical term used in the book, alphabetically, with one canonical defini
 | **Name** | A binding in a namespace that refers to an object; never "a variable that holds a value" | [2](./02_objects_names_and_memory.md) |
 | **Non-data descriptor** | A descriptor defining only `__get__`; can be shadowed by the instance dict (functions, `cached_property`) | [10](./10_descriptors.md) |
 | **`NotImplemented`** | A singleton returned by a binary-operator method to defer to the other operand's reflected method | [4](./04_the_data_model_and_attribute_lookup.md) |
+| **NP-hard** | At least as hard as every problem in NP; no polynomial algorithm is known | [13](./13_complexity_and_cost_models.md) |
 
 ## O–S
 
@@ -85,6 +89,7 @@ Every technical term used in the book, alphabetically, with one canonical defini
 | **Overlapping subproblems** | A recursion revisits the same subproblems; the condition under which DP beats divide and conquer | [15](./15_dynamic_programming_foundations.md) |
 | **Parallelism** | Simultaneous execution on multiple cores; contrast *concurrency* | [8](./08_concurrency_and_parallelism.md) |
 | **`ParamSpec`** | A type variable capturing a whole parameter list, used to type decorators | [7](./07_types_and_static_typing.md), [9](./09_decorators.md) |
+| **Pattern matching** | `match`/`case` (3.10+): test a value against structural patterns that also bind names | [6](./06_functional_programming.md) |
 | **Prefix sum** | $P[i] = \sum_{k<i} x_k$; turns range sums into a subtraction | [19](./19_data_structure_internals.md) |
 | **Protocol** | A `typing.Protocol` class defining a structural interface | [7](./07_types_and_static_typing.md) |
 | **Pseudo-polynomial** | Polynomial in a numeric input's value but exponential in its bit length (knapsack, coin change) | [15](./15_dynamic_programming_foundations.md) |
@@ -99,11 +104,13 @@ Every technical term used in the book, alphabetically, with one canonical defini
 
 | Term | Definition | Chapter |
 |------|------------|:---:|
+| **`__new__` / `__init__`** | Instance creation in two steps: `__new__` allocates and returns the object, `__init__` initialises it | [11](./11_metaclasses_and_class_creation.md) |
 | **Tabulation** | Bottom-up DP: filling a table in an order consistent with dependencies | [15](./15_dynamic_programming_foundations.md) |
 | **Tail-call optimisation** | Reusing the caller's frame for a call in tail position; not performed by CPython | [6](./06_functional_programming.md) |
 | **Timsort / powersort** | CPython's adaptive, stable merge sort; powersort merge policy since 3.11 | [19](./19_data_structure_internals.md) |
 | **Topological order** | A vertex ordering of a DAG in which every edge points forward | [18](./18_graph_algorithms.md) |
 | **Transition** | The recurrence computing a DP state from smaller states | [15](./15_dynamic_programming_foundations.md) |
+| **Two pointers** | Two indices moving through a sequence so each step discards provably useless candidates; Θ(n) instead of Θ(n²) | [19](./19_data_structure_internals.md) |
 | **Union-find** | Disjoint-set forest with path compression and union by size, ~constant time per operation | [18](./18_graph_algorithms.md) |
 | **Variance** | How subtyping of a generic type relates to subtyping of its parameter: co-, contra- or invariant | [7](./07_types_and_static_typing.md) |
 | **Weak reference** | A reference that does not keep its referent alive | [2](./02_objects_names_and_memory.md) |

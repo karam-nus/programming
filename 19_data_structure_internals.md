@@ -10,7 +10,7 @@ title: "Chapter 19 — Data Structure Internals"
 
 ## Overview
 
-Part IV's algorithms are only as fast as the containers they run on. This chapter opens the CPython implementations of `list`, `dict`, `set`, `deque` and `heapq`, derives their costs from their layouts, and shows the observable consequences: when dicts resize, why `-1` and `-2` hash the same, why deleting from a dict doesn't shrink it, why `deque` beats `list` at one end but loses at indexing. It then covers technique-level structures that are built from these — prefix sums, monotonic stacks and queues, tries — which turn whole classes of $\Theta(n^2)$ problems into $\Theta(n)$. All costs here are collected in [Appendix B](./appendix_b_complexity_reference.md). Sizes are from CPython 3.13 on 64-bit Linux.
+Part IV's algorithms are only as fast as the containers they run on. This chapter opens the CPython implementations of `list`, `dict`, `set`, `deque` and `heapq`, derives their costs from their layouts, and shows the observable consequences: when dicts resize, why `-1` and `-2` hash the same, why deleting from a dict doesn't shrink it, why `deque` beats `list` at one end but loses at indexing. It then covers technique-level structures that are built from these — prefix sums, monotonic stacks and queues, two pointers and sliding windows, tries — which turn whole classes of $\Theta(n^2)$ problems into $\Theta(n)$. All costs here are collected in [Appendix B](./appendix_b_complexity_reference.md). Sizes are from CPython 3.13 on 64-bit Linux.
 
 <div class="diagram">
 <div class="diagram-title">The four core layouts</div>
@@ -112,6 +112,12 @@ print(len(d), sys.getsizeof(d), sys.getsizeof(dict(d)))
 10 36952 352
 ```
 
+<div class="fig"><img src="assets/images/dict_set_growth.svg" alt="Step chart of sys.getsizeof for a dict and a set as keys are added; dict steps at 6, 11, 22, 43, 86 and 171 keys"><div class="figcap">Measured with <code>sys.getsizeof</code> on CPython 3.13 by <code>tools/make_figures.py</code>.</div></div>
+
+Insert keys into a dict and watch both arrays. For int keys the slots are exact — CPython hashes small ints to themselves, and the probe sequence below is the one in <code>dictobject.c</code>:
+
+<div class="lab" data-lab="hashtable"></div>
+
 A long-lived cache dict that churns keys should be rebuilt periodically (`d = dict(d)`), or bounded (`functools.lru_cache(maxsize=…)`, an `OrderedDict` with `popitem(last=False)`).
 
 ### Hashes
@@ -192,6 +198,8 @@ Measured at $n = 1000$: `deque.appendleft` + `popleft` costs 28 ns vs 251 ns for
 | `heap[0]` | $\Theta(1)$ | peek |
 | `nsmallest(k, xs)` / `nlargest` | $\Theta(n \log k)$ | bounded heap of size $k$ |
 | `merge(*sorted_iters)` | $\Theta(N \log k)$ lazily | $k$-way merge of sorted streams |
+
+<div class="lab" data-lab="heap"></div>
 
 `heapify` being linear, not $\Theta(n \log n)$, is a classic result: most nodes are near the leaves and sift down only a short distance; summing $\sum_h (n / 2^{h+1}) \cdot h = \Theta(n)$. Python's heap is a min-heap only — negate keys (`-score`) for a max-heap, and put a tie-breaking counter in tuples so that payloads are never compared ([Chapter 17](./17_greedy_algorithms.md)'s Huffman).
 
@@ -295,6 +303,52 @@ print(window_max(xs, 3), [max(xs[i:i + 3]) for i in range(len(xs) - 2)])
 [3, 3, 5, 5, 6, 7] [3, 3, 5, 5, 6, 7]
 ```
 
+### Two pointers and sliding windows
+
+Two indices moving through a sequence — toward each other on sorted data, or both forward to maintain a window — replace a nested $\Theta(n^2)$ loop with a single $\Theta(n)$ pass. The correctness argument is always the same shape: each pointer move discards candidates that provably cannot be the answer.
+
+```python
+import random
+
+def pair_with_sum(xs, target):
+    """xs sorted. Moving lo right only increases the sum, moving hi left only decreases it."""
+    lo, hi = 0, len(xs) - 1
+    while lo < hi:
+        s = xs[lo] + xs[hi]
+        if s == target:
+            return lo, hi
+        if s < target:
+            lo += 1          # every pair (lo, k<=hi) is too small: discard lo
+        else:
+            hi -= 1          # every pair (k>=lo, hi) is too large: discard hi
+    return None
+
+def longest_unique_window(s):
+    """Length of the longest substring without repeated characters, one pass."""
+    last, start, best = {}, 0, 0
+    for i, ch in enumerate(s):
+        if last.get(ch, -1) >= start:
+            start = last[ch] + 1          # shrink: drop everything up to the previous ch
+        last[ch] = i
+        best = max(best, i - start + 1)
+    return best
+
+def brute_unique(s):
+    return max((j - i for i in range(len(s)) for j in range(i, len(s) + 1) if len(set(s[i:j])) == j - i), default=0)
+
+random.seed(2)
+for _ in range(300):
+    s = "".join(random.choices("abcd", k=random.randint(0, 12)))
+    assert longest_unique_window(s) == brute_unique(s)
+print(pair_with_sum([1, 3, 4, 6, 8, 11], 10), longest_unique_window("abcabcbb"), longest_unique_window("pwwkew"))
+```
+
+```text
+(2, 3) 3 3
+```
+
+Tokenizers' longest-match scans, deduplicating sorted streams, merging two sorted lists (the merge step of [Chapter 14](./14_recursion_and_divide_and_conquer.md)) and rate limiters over a time window are all two-pointer algorithms.
+
 ### Trie: prefix queries over strings
 
 A trie stores strings as paths in a tree of characters; lookup and insertion cost $\Theta(L)$ for a string of length $L$, independent of how many strings are stored, and "all words with prefix $p$" is a subtree walk. In Python a dict-of-dicts is the idiomatic trie. Tokenizers use trie-like structures for longest-match vocabulary lookup.
@@ -340,7 +394,7 @@ print(with_prefix(t, "train"), with_prefix(t, "tr")[-1], with_prefix(t, "x"))
 - `set` has no order, keeps load under 60%, and its algebra costs are driven by the smaller operand for intersection.
 - `deque` is a linked list of 64-slot blocks: $\Theta(1)$ at both ends, slow indexing, and `maxlen` gives a bounded buffer.
 - `heapq` is a min-heap in a list with linear `heapify`; use tie-breaking counters and `nlargest`/`merge` for top-$k$ and sorted-stream merging.
-- Prefix sums, monotonic stacks/deques and tries convert recurring $\Theta(n^2)$ query patterns into $\Theta(n)$ or $\Theta(L)$.
+- Prefix sums, monotonic stacks/deques, two pointers/sliding windows and tries convert recurring $\Theta(n^2)$ query patterns into $\Theta(n)$ or $\Theta(L)$.
 
 ## References
 

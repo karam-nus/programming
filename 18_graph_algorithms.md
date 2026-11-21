@@ -87,6 +87,10 @@ print(bfs_dist(adj, 0), dfs_order(adj, 0))
 
 Vertices 5 and 6 are absent: unreachable from 0. Running BFS from each unvisited vertex enumerates **connected components** in $\Theta(V + E)$ total. On a grid (images, game maps), the "graph" is implicit — neighbours are computed from coordinates — and the same code applies with `adj[v]` replaced by a neighbour function; flood fill and connected-component labelling of segmentation masks are BFS.
 
+Same graph, four algorithms. The only thing that changes between BFS, DFS and Dijkstra is the data structure holding the frontier:
+
+<div class="lab" data-lab="graph" data-alg="bfs"></div>
+
 ---
 
 ## Topological Sort

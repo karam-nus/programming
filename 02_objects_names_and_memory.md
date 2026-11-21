@@ -80,6 +80,11 @@ print(sys.getsizeof(nested), sys.getsizeof(nested[0]))
 
 The outer list reports 64 bytes; the inner list it points to is 8 KB. For deep sizes, walk references (`gc.get_referents`) or measure the process with `tracemalloc` ([Chapter 21](./21_profiling_and_optimization.md)).
 
+<div class="receipts">
+<div class="receipt"><div class="r-head">ONE MILLION INTS</div><div class="r-sub">as a Python list</div><div class="r-rule"></div><div class="r-line"><span>1,000,000 pointers × 8 B</span><span>8.0 MB</span></div><div class="r-line"><span>1,000,000 int objects</span><span>32.0 MB</span></div><div class="r-line muted"><span>(getsizeof says 28 B; pymalloc</span><span></span></div><div class="r-line muted"><span> allocates 32-byte blocks)</span><span></span></div><div class="r-rule"></div><div class="r-total"><span>TOTAL</span><span>40.0 MB</span></div><div class="r-foot">tracemalloc · CPython 3.13</div></div>
+<div class="receipt"><div class="r-head">ONE MILLION INTS</div><div class="r-sub">as array('q') / NumPy int64</div><div class="r-rule"></div><div class="r-line"><span>array('q') buffer</span><span>8.2 MB</span></div><div class="r-line"><span>numpy.arange(N, dtype=int64)</span><span>8.0 MB</span></div><div class="r-line muted"><span>no per-element objects</span><span></span></div><div class="r-line hl"><span>saving vs list</span><span>≈ 5×</span></div><div class="r-rule"></div><div class="r-total"><span>TOTAL</span><span>8.0 MB</span></div><div class="r-foot">same numbers, one contiguous buffer</div></div>
+</div>
+
 ---
 
 ## Names Are Bindings
@@ -96,6 +101,10 @@ print(a, a is b)
 ```text
 [1, 2, 3, 4] True
 ```
+
+Step through four situations where this matters — aliasing, the mutable default argument, the `[[0] * 3] * 3` grid, and a reference cycle. Arrows are references; refcounts update as names and container slots come and go.
+
+<div class="lab" data-lab="names"></div>
 
 **Rebinding vs mutating** is the distinction that matters. `b = b + [5]` builds a new list and rebinds `b`; `b += [5]` calls `list.__iadd__`, which mutates in place and then rebinds `b` to the same object. For immutable types, `+=` necessarily rebinds to a new object:
 
@@ -289,7 +298,12 @@ print("collected:", gc.collect() >= 2)
 collected: True
 ```
 
-The collector (`Python/gc.c`) tracks only *container* objects (those that can hold references). To find garbage it copies each tracked object's refcount, subtracts references that come from *other tracked objects*, and anything left at zero is reachable only from inside the set — unreachable from the outside world. Objects surviving a collection are promoted; older objects are scanned less often (thresholds in `gc.get_threshold()`; 3.14 switched the default build to an incremental collector to bound pause times).
+The collector (`Python/gc.c`, documented in `InternalDocs/garbage_collector.md`) tracks only *container* objects — those that can hold references. A collection works in two passes:
+
+1. **Subtract internal references.** Copy each tracked object's refcount into a scratch field, then, for every reference from one tracked object to another, subtract one from the target. What remains counts references from *outside* the set — frames, module globals, untracked objects.
+2. **Mark from the survivors.** Any object with a non-zero remainder is reachable, **and so is everything reachable from it**: the collector traverses outward from those roots and marks them all. Only objects left unmarked are garbage.
+
+The second pass matters: an object whose remainder is zero is *not* necessarily garbage — a reachable object inside the set may still point to it. Objects that survive a collection are promoted, and older objects are scanned less often (thresholds in `gc.get_threshold()`; 3.14 switched the default build to an incremental collector to bound pause times).
 
 **When it matters in ML code.** Cycles that hold large tensors (a model referencing a callback that references the trainer that references the model) are freed only when the collector runs, so GPU memory may appear to "leak" until a `gc.collect()`. Break the cycle with a weak reference, or delete explicitly.
 

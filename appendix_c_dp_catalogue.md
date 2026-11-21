@@ -43,7 +43,7 @@ One row per dynamic program worked in the book. Each entry gives the state sente
 |---------|-------|-----------|:---:|:---:|-------------------|:---:|
 | **0/1 knapsack** | $\mathrm{dp}[i][c]$ = best value, first $i$ items, capacity $c$ | $\max(\mathrm{dp}[i-1][c], \mathrm{dp}[i-1][c-w_i]+v_i)$ | $\Theta(nW)$ | $\Theta(W)$, **downward** | budgeted selection | [15](./15_dynamic_programming_foundations.md) |
 | **Unbounded knapsack** | same, items reusable | same, **upward** | $\Theta(nW)$ | $\Theta(W)$ | cutting stock, coin change | [15](./15_dynamic_programming_foundations.md) |
-| **Subset sum (bitset)** | bit $s$ = sum $s$ reachable | `reach \|= reach << x` | $\Theta(nS/w)$ word ops | $\Theta(S)$ bits | partition, feasibility | [20](./20_bit_manipulation.md) |
+| **Subset sum (bitset)** | bit $s$ = sum $s$ reachable | <code>reach &#124;= reach &lt;&lt; x</code> | $\Theta(nS/w)$ word ops | $\Theta(S)$ bits | partition, feasibility | [20](./20_bit_manipulation.md) |
 
 ## Interval, Grid, Tree, Subset, DAG, Digit
 
@@ -65,6 +65,7 @@ One row per dynamic program worked in the book. Each entry gives the state sente
 |---------|---------|-------------|:---:|
 | **Beam search decoding** | the state is the whole prefix; no overlapping subproblems | heuristic search; exact only for Markov models | [16](./16_dynamic_programming_patterns.md) |
 | **Longest simple path, general graph** | no optimal substructure (prefix and suffix may share vertices) | NP-hard; exponential search | [16](./16_dynamic_programming_patterns.md) |
+| **N-Queens and constraint search** | branches are distinct partial placements, not overlapping subproblems | backtracking with pruning | [14](./14_recursion_and_divide_and_conquer.md) |
 | **Interval scheduling (unweighted)** | greedy-choice property holds | earliest finish greedy | [17](./17_greedy_algorithms.md) |
 | **Fractional knapsack** | greedy-choice property holds | density greedy | [17](./17_greedy_algorithms.md) |
 

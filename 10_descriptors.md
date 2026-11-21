@@ -80,6 +80,23 @@ __get__(obj=instance, objtype=C)
 
 Functions are non-data descriptors. `function.__get__(obj, type)` returns a **bound method**: a tiny object holding `__func__` and `__self__` whose call prepends `__self__` to the arguments.
 
+<div class="svgfig">
+<svg viewBox="0 0 820 190" width="820" role="img" aria-label="n.forward(5): function.__get__ builds a bound method that prepends n">
+<rect x="20" y="60" width="130" height="44" rx="8" class="box"/><text x="85" y="82" text-anchor="middle" class="tm">n.forward</text>
+<path d="M150 82 L218 82" class="ln hot"/><path d="M210 76 L220 82 L210 88" class="ln hot"/>
+<rect x="222" y="40" width="250" height="84" rx="8" fill="#1e1830" stroke="#c4b5fd" stroke-width="1.6"/>
+<text x="347" y="62" text-anchor="middle" class="t" style="fill:#c4b5fd">Net.__dict__['forward']</text>
+<text x="347" y="86" text-anchor="middle" class="tm">function.__get__(n, Net)</text>
+<text x="347" y="110" text-anchor="middle" class="ts">non-data descriptor, step 4 of lookup</text>
+<path d="M472 82 L540 82" class="ln hot"/><path d="M532 76 L542 82 L532 88" class="ln hot"/>
+<rect x="544" y="34" width="256" height="96" rx="8" fill="#12221a" stroke="#4ade80" stroke-width="1.6"/>
+<text x="672" y="56" text-anchor="middle" class="t" style="fill:#4ade80">bound method</text>
+<text x="560" y="82" class="tm">__func__ = forward</text>
+<text x="560" y="106" class="tm">__self__ = n</text>
+<text x="420" y="164" text-anchor="middle" class="ts">calling it: method(5)  →  forward(n, 5)   ·   a new bound-method object per access (n.forward is n.forward → False)</text>
+</svg>
+</div>
+
 ```python
 class Net:
     def forward(self, x):

@@ -55,6 +55,12 @@ From `bench/concurrency.py` (CPython 3.13.18 GIL build, 4 vCPU Xeon @ 2.1 GHz, 8
 
 Threads give *no* speedup on the CPU-bound job — the GIL serialises the bytecode — and a near-ideal 4× on the I/O-bound job, because sleeping threads release it. Processes give 2.6× on CPU-bound work with 4 workers (not 4×: process start-up and pickling results cost time, and 4 vCPUs in a container are not 4 dedicated cores) and match threads on I/O, at a higher memory and start-up cost.
 
+<div class="fig"><img src="assets/images/concurrency.svg" alt="Grouped bar chart: CPU-bound job takes 0.66 s serial, 0.65 s with threads, 0.25 s with processes; I/O-bound takes 0.40, 0.10 and 0.11 s"><div class="figcap">Generated from <code>bench/concurrency.py</code>.</div></div>
+
+The model below shows *why*. Each row is a thread or process; each column is one switch interval. Pick a workload and an execution strategy and watch where the time goes — red is time spent ready to run but waiting for the GIL:
+
+<div class="lab" data-lab="gil"></div>
+
 ### `concurrent.futures` as the common interface
 
 | | |
@@ -124,6 +130,10 @@ print("expected 4000, lost updates:", balance < 4000)
 ```text
 expected 4000, lost updates: True
 ```
+
+Choose the interleaving yourself — the GIL may switch threads between *any* two bytecode instructions, and only the schedule `R1 R2 W1 W2` loses an update:
+
+<div class="lab" data-lab="race"></div>
 
 Without the `sleep(0)` the window is a few instructions and the bug appears rarely — which is worse, because it passes tests. The fix is a lock around the read-modify-write:
 

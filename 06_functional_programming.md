@@ -10,7 +10,7 @@ title: "Chapter 6 — Functional Programming"
 
 ## Overview
 
-Functional programming is a discipline more than a feature set: functions are values, functions don't change the world, and programs are built by composing small functions. Python supports the first fully, the second by convention only, and the third with a modest standard library. This chapter covers what transfers well — first-class and higher-order functions, `functools`, immutability, pure cores with effectful shells — and what doesn't: unbounded recursion and the absence of tail-call optimisation. It closes with the place functional style matters most in ML today: JAX's requirement that transformed functions be pure. It assumes closures from [Chapter 3](./03_scope_closures_and_binding.md).
+Functional programming is a discipline more than a feature set: functions are values, functions don't change the world, and programs are built by composing small functions. Python supports the first fully, the second by convention only, and the third with a modest standard library. This chapter covers what transfers well — first-class and higher-order functions, `functools`, structural pattern matching, immutability, pure cores with effectful shells — and what doesn't: unbounded recursion and the absence of tail-call optimisation. It closes with the place functional style matters most in ML today: JAX's requirement that transformed functions be pure. It assumes closures from [Chapter 3](./03_scope_closures_and_binding.md).
 
 <div class="diagram">
 <div class="diagram-title">What Python gives you, and what it doesn't</div>
@@ -221,6 +221,86 @@ PyTorch's `torch.utils._pytree` solves the same problem — mapping over nested 
 
 ---
 
+## Structural Pattern Matching
+
+| | |
+|---|---|
+| **Mechanism** | `match` / `case`: test a value against patterns that both check shape and bind names |
+| **Defined in** | PEP 634 (specification), PEP 635 (motivation), PEP 636 (tutorial) |
+| **Since** | 3.10 |
+| **Hooks into** | `__match_args__` for positional class patterns; `isinstance` for class patterns; `collections.abc.Sequence`/`Mapping` for structural patterns |
+| **Typical use** | Interpreters and tree rewriters, message/event dispatch, parsing JSON-like data, command lines |
+| **Cost** | Cases are tested top to bottom like an `if/elif` chain — not a jump table |
+| **Prefer instead** | A dict of handlers for flat dispatch on one key; `singledispatch` for open-ended types |
+| **Failure modes** | A bare name in a pattern *captures* instead of comparing; `str` is not matched as a sequence; order matters |
+
+Pattern matching comes from the ML family of functional languages and pairs naturally with immutable data: describe the *shape* of the input, and the match both checks it and destructures it. Its home turf is recursive data — expression trees, ASTs ([Chapter 12](./12_introspection_ast_and_codegen.md)), nested configs:
+
+```python
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class Num:
+    value: float
+
+@dataclass(frozen=True)
+class BinOp:
+    op: str
+    left: object
+    right: object
+
+def simplify(e):
+    match e:
+        case BinOp("*", x, Num(1)) | BinOp("*", Num(1), x):      # class patterns via __match_args__
+            return simplify(x)
+        case BinOp("+", x, Num(0)) | BinOp("+", Num(0), x):
+            return simplify(x)
+        case BinOp("*", _, Num(0)) | BinOp("*", Num(0), _):
+            return Num(0)
+        case BinOp(op, l, r):
+            new = BinOp(op, simplify(l), simplify(r))
+            return new if new == e else simplify(new)   # children changed: try the rules again
+        case _:
+            return e
+
+expr = BinOp("+", BinOp("*", Num(7), Num(1)), BinOp("*", Num(3), Num(0)))
+print(simplify(expr), Num.__match_args__)
+```
+
+```text
+Num(value=7) ('value',)
+```
+
+`@dataclass` generates `__match_args__` from the field order, which is what lets `BinOp("*", x, Num(1))` match positionally. Note the last rule: a rewrite that changes children must re-run the rules on the rebuilt node, or `(7 * 1) + (3 * 0)` stops at `7 + 0` — the fixed-point iteration every optimizing compiler pass needs. The pattern kinds, all in one table:
+
+| Pattern | Example | Matches when | Binds |
+|---------|---------|--------------|-------|
+| **Literal** | `case 0:` / `case "add":` / `case None:` | `==` (or `is` for `None`, `True`, `False`) | — |
+| **Capture** | `case x:` | always | `x` |
+| **Wildcard** | `case _:` | always | — |
+| **Value** (dotted name) | `case Color.RED:` | `==` the constant | — |
+| **Sequence** | `case [first, *rest]:` | a `Sequence` (not `str`/`bytes`) of fitting length | `first`, `rest` |
+| **Mapping** | `case {"lr": float(lr), **extra}:` | a `Mapping` containing those keys | `lr`, `extra` |
+| **Class** | `case Point(x=0, y=y):` | `isinstance` + attribute patterns | `y` |
+| **OR / AS / guard** | <code>case 1 &#124; 2 as n if n &gt; 1:</code> | any alternative, then the guard | `n` |
+
+The classic trap: a bare name is always a capture pattern. `case RED:` does not compare against a variable `RED` — it binds a new `RED` to the subject and matches everything. Constants must be dotted names (`Color.RED`) or literals:
+
+```python
+RED = "red"
+def describe(c):
+    match c:
+        case RED:                     # captures! matches anything
+            return f"captured {RED!r}"
+print(describe("blue"))
+```
+
+```text
+captured 'blue'
+```
+
+---
+
 ## Recursion Without Tail Calls
 
 Functional languages express iteration as recursion and rely on **tail-call optimisation** (TCO) to run it in constant stack space. CPython deliberately has no TCO: Guido van Rossum's stated reasons are that it destroys tracebacks and encourages a style that doesn't fit the language. Every recursive call pushes a frame, and the depth is capped:
@@ -304,6 +384,7 @@ PyTorch's `torch.func` (`grad`, `vmap`, `functional_call`) brings the same model
 - Prefer comprehensions to `map`/`filter` with a lambda; use `map` only with an existing named function.
 - Purity is a design choice in Python: keep a pure core that computes decisions and an imperative shell that performs effects.
 - `functools.partial` is picklable and therefore safe for multiprocessing callbacks where lambdas fail; `singledispatch` adds per-type behaviour to types you don't own.
+- `match`/`case` (3.10+) checks shape and destructures in one step — ideal for trees and messages; bare names in patterns capture, so constants must be dotted names or literals.
 - CPython has no tail-call optimisation and a default recursion limit of 1000: recurse only when depth is logarithmic or small, otherwise loop or use an explicit stack.
 - In Python, immutability's main payoff is hashability — the precondition for dict keys, sets and caching.
 - JAX transformations trace Python functions; impure code inside them misbehaves, which makes the functional discipline mandatory there.
@@ -315,6 +396,7 @@ PyTorch's `torch.func` (`grad`, `vmap`, `functional_call`) brings the same model
 | Functional Programming HOWTO | Kuchling, Python docs | docs.python.org/3/howto/functional.html | Iterators, `functools`, `operator` in a functional style |
 | PEP 443 — Single-dispatch generic functions | Langa, 2013 | peps.python.org/pep-0443 | `singledispatch` semantics |
 | PEP 814 — frozendict | Python, 2025 | peps.python.org/pep-0814 | Built-in immutable mapping (3.15) |
+| PEP 634, PEP 635, PEP 636 — Structural Pattern Matching | Bucher, van Rossum et al., 2020 | peps.python.org/pep-0634 | Pattern semantics, `__match_args__`, capture vs value patterns |
 | "Tail Recursion Elimination" | van Rossum, 2009 | neopythonic.blogspot.com/2009/04/tail-recursion-elimination.html | Why CPython has no TCO |
 | *Boundaries* (functional core, imperative shell) | Bernhardt, 2012 | destroyallsoftware.com/talks/boundaries | The architecture pattern |
 | JAX — The Sharp Bits; Pytrees | Google / JAX docs | docs.jax.dev | Purity requirements under tracing; pytrees |
